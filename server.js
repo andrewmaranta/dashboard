@@ -1,0 +1,276 @@
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+
+const WEIGHT_LOG_PATH = path.join(__dirname, '../nutrition/weight_log.md');
+const QUESTS_PATH = path.join(__dirname, '../quests.md');
+const FINANCE_PATH = path.join(__dirname, '../finance/summary.json');
+const NUTRITION_LOG_PATH = path.join(__dirname, '../nutrition/log.csv');
+
+// API: Get Daily Nutrition/Activity
+app.get('/api/daily-stats', (req, res) => {
+    fs.readFile(NUTRITION_LOG_PATH, 'utf8', (err, content) => {
+        if (err) return res.json({ calories: 0, protein: 0, steps: 0, water: 0 });
+        
+        const today = new Date().toISOString().split('T')[0];
+        const lines = content.split('\n');
+        let stats = { calories: 0, protein: 0, steps: 0, water: 0 };
+        
+        // Skip header, sum values for today
+        for (let i = 1; i < lines.length; i++) {
+            const parts = lines[i].split(',');
+            if (parts[0] === today) {
+                stats.calories += isNaN(parseFloat(parts[2])) ? 0 : parseFloat(parts[2]);
+                stats.protein += isNaN(parseFloat(parts[3])) ? 0 : parseFloat(parts[3]);
+                stats.steps = Math.max(stats.steps, isNaN(parseFloat(parts[6])) ? 0 : parseFloat(parts[6]));
+                stats.water = Math.max(stats.water, isNaN(parseFloat(parts[8])) ? 0 : parseFloat(parts[8]));
+            }
+        }
+        res.json(stats);
+    });
+});
+
+// API: Get Finance Data
+app.get('/api/finance', (req, res) => {
+    fs.readFile(FINANCE_PATH, 'utf8', (err, content) => {
+        if (err) return res.json({ netWorth: '$0', emergencyFund: '$0', surplus: '$0' });
+        try {
+            const data = JSON.parse(content);
+            if (data.netWorth && data.emergencyFund && data.surplus) { res.json(data); } else { res.json({ netWorth: 'Error', emergencyFund: 'Error', surplus: 'Error' }); }
+        } catch (e) {
+            res.json({ netWorth: 'Error', emergencyFund: 'Error', surplus: 'Error' });
+        }
+    });
+});
+
+// Helper: Parse weight log
+function parseWeightLog(markdown) {
+    const lines = markdown.split('\n');
+    const data = [];
+    for (let i = 2; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || !line.startsWith('|')) continue;
+        const parts = line.split('|').map(p => p.trim());
+        if (parts.length >= 4) {
+            const date = parts[1];
+            const weight = parseFloat(parts[2]);
+            const bodyFatStr = parts[3].replace('%', '');
+            const bodyFat = parseFloat(bodyFatStr);
+            if (date && !isNaN(weight)) {
+                data.push({ date, weight, bodyFat });
+            }
+        }
+    }
+    return data;
+}
+
+// Helper: Parse quests.md (Revised for D&D Attribute XP)
+function parseQuests(markdown) {
+    const lines = markdown.split('\n');
+    let section = '';
+    const result = {
+        profile: { class: 'Unknown', level: 1, xp: 0, xpMax: 100 },
+        attributes: {},
+        daily: [],
+        main: [],
+        completed: []
+    };
+    
+    let currentMainQuest = 'General';
+    let currentDailySection = 'General';
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+        
+        // Detect Sections
+        if (trimmed.startsWith('## Profile')) { section = 'profile'; continue; }
+        else if (trimmed.startsWith('## Attributes')) { section = 'attributes'; continue; }
+        else if (trimmed.startsWith('## ⚔️ Daily Grind')) { section = 'daily'; continue; }
+        else if (trimmed.startsWith('## 🛡️ Campaign') || trimmed.startsWith('## 🏰 Campaign') || trimmed.startsWith('## Campaign')) { 
+            section = 'main'; 
+            continue; 
+        }
+        else if (trimmed.startsWith('## 📜 Side Quests')) { section = 'daily'; continue; }
+        else if (trimmed.startsWith('## Completed Log')) { section = 'completed'; continue; }
+
+        // Logic per section
+        if (section === 'profile') {
+            if (trimmed.startsWith('- **Class:**')) result.profile.class = trimmed.replace('- **Class:**', '').replace(/\*\*/g, '').trim();
+            if (trimmed.startsWith('- **Total Level:**')) {
+                 const levelPart = trimmed.split(':')[1] || '1';
+                 result.profile.level = parseInt(levelPart.trim()) || 1;
+            }
+        } 
+        else if (section === 'attributes') {
+            const attrMatch = trimmed.match(/- \*\*(.*?) \(.*?\):\*\* (\d+) \| (\d+) \/ (\d+)/);
+            if (attrMatch) {
+                const attr = attrMatch[1];
+                result.attributes[attr] = { score: parseInt(attrMatch[2]), xp: parseInt(attrMatch[3]), max: parseInt(attrMatch[4]) };
+            }
+        } 
+        else if (section === 'daily') {
+            if (trimmed.startsWith('### ')) {
+                currentDailySection = trimmed.replace(/#/g, '').trim();
+            }
+            else if (trimmed.startsWith('- [')) {
+                const item = parseQuestLine(trimmed);
+                if (item) {
+                    item.campaign = currentDailySection;
+                    result.daily.push(item);
+                }
+            }
+        }
+        else if (section === 'main') {
+            if (trimmed.startsWith('### ')) {
+                currentMainQuest = trimmed.replace(/#/g, '').trim();
+            }
+            else if (trimmed.startsWith('- [')) {
+                const item = parseQuestLine(trimmed);
+                if (item) {
+                    item.campaign = currentMainQuest;
+                    result.main.push(item);
+                }
+            }
+        }
+    }
+    return result;
+}
+
+function parseQuestLine(line) {
+    const isCompleted = line.trim().startsWith('- [x]');
+    // Regex for: "- [ ] Quest Name (+50 XP)"
+    const textMatch = line.match(/- \[[ x]\] (.*?) \(\+(.*?)\)/);
+    
+    if (textMatch) {
+        const text = textMatch[1].trim();
+        const rewardsStr = textMatch[2];
+        let rewards = {};
+        
+        rewardsStr.split(',').forEach(r => {
+            const parts = r.trim().split(' ');
+            if (parts.length >= 2) {
+                const val = parseInt(parts[0]);
+                const attr = parts[1];
+                if (!isNaN(val)) rewards[attr] = val;
+            }
+        });
+        return { text, rewards, completed: isCompleted, raw: line };
+    } else {
+        // Fallback for no rewards listed
+        const text = line.replace(/- \[[ x]\] /, '').trim();
+        return { text, rewards: {}, completed: isCompleted, raw: line };
+    }
+}
+
+// API: Get Health Data
+app.get('/api/health', (req, res) => {
+    fs.readFile(WEIGHT_LOG_PATH, 'utf8', (err, content) => {
+        if (err) return res.status(500).json({ error: 'Failed to read weight log' });
+        res.json(parseWeightLog(content));
+    });
+});
+
+// API: Get Quest Data
+app.get('/api/quests', (req, res) => {
+    fs.readFile(QUESTS_PATH, 'utf8', (err, content) => {
+        if (err) return res.status(500).json({ error: 'Failed to read quests' });
+        res.json(parseQuests(content));
+    });
+});
+
+// API: Toggle Quest (Updated for Attribute XP)
+app.post('/api/quests/toggle', (req, res) => {
+    const { questText } = req.body;
+    
+    fs.readFile(QUESTS_PATH, 'utf8', (err, content) => {
+        if (err) return res.status(500).json({ error: 'Read error' });
+        
+        let lines = content.split('\n');
+        let newLines = [];
+        let rewards = {};
+        let found = false;
+        let isComplete = false;
+
+        for (let line of lines) {
+            if (line.includes(questText) && (line.trim().startsWith('- [ ]') || line.trim().startsWith('- [x]'))) {
+                found = true;
+                isComplete = line.trim().startsWith('- [x]');
+                
+                const rewardMatch = line.match(/\(\+(.*?)\)/);
+                if (rewardMatch) {
+                    const parts = rewardMatch[1].split(',');
+                    parts.forEach(p => {
+                        const segs = p.trim().split(' ');
+                        if (segs.length >= 2) {
+                             rewards[segs[1]] = parseInt(segs[0]);
+                        }
+                    });
+                }
+
+                if (isComplete) {
+                    newLines.push(line.replace('- [x]', '- [ ]'));
+                } else {
+                    newLines.push(line.replace('- [ ]', '- [x]'));
+                }
+            } else {
+                newLines.push(line);
+            }
+        }
+
+        if (!found) return res.status(404).json({ error: 'Quest not found' });
+
+        let finalLines = [];
+        
+        for (let line of newLines) {
+            let updatedLine = line;
+            
+            for (const [attr, xpVal] of Object.entries(rewards)) {
+                if (line.trim().startsWith(`- **${attr} (`)) {
+                    const match = line.match(/:\*\* (\d+) \| (\d+) \/ (\d+)/);
+                    if (match) {
+                        let score = parseInt(match[1]);
+                        let xp = parseInt(match[2]);
+                        let max = parseInt(match[3]);
+                        
+                        const change = isComplete ? -xpVal : xpVal;
+                        xp += change;
+                        
+                        if (xp >= max) {
+                            score += Math.floor(xp / max);
+                            xp = xp % max;
+                        } else if (xp < 0) {
+                            xp = 0; 
+                        }
+                        
+                        updatedLine = line.replace(/:\*\* .*/, `:** ${score} | ${xp} / ${max}`);
+                    } else {
+                        const legacyMatch = line.match(/:\*\* (\d+)/);
+                        if (legacyMatch) {
+                            let score = parseInt(legacyMatch[1]);
+                            let xp = isComplete ? 0 : xpVal;
+                            updatedLine = line.replace(/:\*\* .*/, `:** ${score} | ${xp} / 100`);
+                        }
+                    }
+                }
+            }
+            finalLines.push(updatedLine);
+        }
+
+        fs.writeFile(QUESTS_PATH, finalLines.join('\n'), 'utf8', (err) => {
+            if (err) return res.status(500).json({ error: 'Write error' });
+            res.json({ success: true });
+        });
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Life RPG Dashboard running on http://localhost:${PORT}`);
+});

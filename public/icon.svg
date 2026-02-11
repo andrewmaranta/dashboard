@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <!-- Background -->
+    <rect width="512" height="512" fill="#0f0f12" rx="100" />
+    
+    <!-- Outer Circuit Ring -->
+    <circle cx="256" cy="256" r="210" fill="none" stroke="#c8a45c" stroke-width="15" stroke-dasharray="80 40" opacity="0.8" />
+    <circle cx="256" cy="256" r="190" fill="none" stroke="#2b2b2e" stroke-width="5" />
+
+    <!-- Monk Fist Symbol (Simplified Geometric) -->
+    <path fill="#c8a45c" d="M180,140 h150 c30,0 50,20 50,50 v130 c0,40 -30,70 -70,70 h-90 c-40,0 -70,-30 -70,-70 v-130 c0,-30 20,-50 30,-50 z" />
+    <rect x="190" y="190" width="130" height="10" fill="#0f0f12" opacity="0.5"/>
+    <rect x="190" y="240" width="130" height="10" fill="#0f0f12" opacity="0.5"/>
+    <rect x="190" y="290" width="130" height="10" fill="#0f0f12" opacity="0.5"/>
+
+    <!-- Digital Accents (Cyan) -->
+    <rect x="251" y="80" width="10" height="40" fill="#00e5ff" />
+    <rect x="251" y="392" width="10" height="40" fill="#00e5ff" />
+</svg>
