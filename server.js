@@ -272,6 +272,68 @@ app.post('/api/quests/toggle', (req, res) => {
     });
 });
 
+// API: Calculate Streaks
+app.get('/api/streaks', (req, res) => {
+    fs.readFile(NUTRITION_LOG_PATH, 'utf8', (err, content) => {
+        if (err) return res.json({ foodLogStreak: 0, calorieStreak: 0, proteinStreak: 0 });
+        
+        const lines = content.split('\n').slice(1); // Skip header
+        const dailyStats = new Map();
+        
+        // Aggregate daily totals
+        lines.forEach(line => {
+            if (!line.trim()) return;
+            const [date, , calories, protein] = line.split(',');
+            if (!dailyStats.has(date)) {
+                dailyStats.set(date, { calories: 0, protein: 0, hasEntry: true });
+            }
+            const stats = dailyStats.get(date);
+            stats.calories += parseFloat(calories) || 0;
+            stats.protein += parseFloat(protein) || 0;
+        });
+
+        // Convert to array and sort by date
+        const sortedDays = Array.from(dailyStats.entries())
+            .sort((a, b) => new Date(a[0]) - new Date(b[0]));
+
+        let foodLogStreak = 0;
+        let calorieStreak = 0;
+        let proteinStreak = 0;
+
+        // Calculate streaks from the most recent day
+        for (let i = sortedDays.length - 1; i >= 0; i--) {
+            const [, stats] = sortedDays[i];
+            
+            // Food Log Streak: Any entry
+            if (stats.hasEntry) {
+                foodLogStreak++;
+            } else {
+                break;
+            }
+
+            // Calorie Goal Streak: ≤ 1800 calories
+            if (stats.calories <= 1800) {
+                calorieStreak++;
+            } else {
+                break;
+            }
+
+            // Protein Goal Streak: ≥ 150g protein
+            if (stats.protein >= 150) {
+                proteinStreak++;
+            } else {
+                break;
+            }
+        }
+
+        res.json({
+            foodLogStreak,
+            calorieStreak,
+            proteinStreak
+        });
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Life RPG Dashboard running on http://localhost:${PORT}`);
 });
