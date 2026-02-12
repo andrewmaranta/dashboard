@@ -94,12 +94,11 @@ function parseQuests(markdown) {
         // Detect Sections
         if (trimmed.startsWith('## Profile')) { section = 'profile'; continue; }
         else if (trimmed.startsWith('## Attributes')) { section = 'attributes'; continue; }
-        else if (trimmed.startsWith('## ⚔️ Daily Grind')) { section = 'daily'; continue; }
-        else if (trimmed.startsWith('## 🛡️ Campaign') || trimmed.startsWith('## 🏰 Campaign') || trimmed.startsWith('## Campaign')) { 
+        else if (trimmed.startsWith('## ⚡ Core Habits')) { section = 'daily'; continue; }
+        else if (trimmed.startsWith('## 🎯 Long-Term Goals')) { 
             section = 'main'; 
             continue; 
         }
-        else if (trimmed.startsWith('## 📜 Side Quests')) { section = 'daily'; continue; }
         else if (trimmed.startsWith('## Completed Log')) { section = 'completed'; continue; }
 
         // Logic per section
@@ -119,8 +118,24 @@ function parseQuests(markdown) {
         } 
         else if (section === 'daily') {
             if (trimmed.startsWith('### ')) {
+                // Store the habit name and look for reward on next line
                 currentDailySection = trimmed.replace(/#/g, '').trim();
+                const habitName = currentDailySection;
+                // Parse (STR) from habit name if present
+                const attrMatch = habitName.match(/\((.*?)\)/);
+                const attrType = attrMatch ? attrMatch[1] : '';
+                // Create quest item
+                if (habitName) {
+                    result.daily.push({
+                        text: habitName,
+                        rewards: { [attrType]: 25 },
+                        completed: false,
+                        campaign: 'Core Habits',
+                        raw: trimmed
+                    });
+                }
             }
+            // Still handle traditional checkbox items
             else if (trimmed.startsWith('- [')) {
                 const item = parseQuestLine(trimmed);
                 if (item) {
@@ -506,7 +521,7 @@ app.get('/api/goals', (req, res) => {
 
 // API: Complete Dashboard Check-In
 app.post('/api/quest-complete', (req, res) => {
-    const { questName = "Dashboard Check-In" } = req.body;
+    const { questName = "Meta Habit: The Dashboard Check-In" } = req.body;
     fs.readFile(QUESTS_PATH, 'utf8', (err, content) => {
         if (err) return res.status(500).json({ error: 'Failed to read quests' });
         
@@ -514,7 +529,7 @@ app.post('/api/quest-complete', (req, res) => {
         let found = false;
         
         for (let i = 0; i < lines.length; i++) {
-            if (lines[i].includes(questName) && !lines[i].includes('[x]')) {
+            if (lines[i].includes('Dashboard Check-In') && !lines[i].includes('[x]')) {
                 lines[i] = lines[i].replace('[ ]', '[x]');
                 found = true;
                 break;
