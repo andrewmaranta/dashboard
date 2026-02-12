@@ -26,7 +26,7 @@ app.get('/api/daily-stats', (req, res) => {
         
         // Skip header, sum values for today
         for (let i = 1; i < lines.length; i++) {
-            const parts = lines[i].split(',');
+            const parts = parseCSVLine(lines[i]);
             if (parts[0] === today) {
                 stats.calories += isNaN(parseFloat(parts[2])) ? 0 : parseFloat(parts[2]);
                 stats.protein += isNaN(parseFloat(parts[3])) ? 0 : parseFloat(parts[3]);
@@ -283,7 +283,7 @@ app.get('/api/streaks', (req, res) => {
         // Aggregate daily totals
         lines.forEach(line => {
             if (!line.trim()) return;
-            const parts = line.split(',');
+            const parts = parseCSVLine(line);
             if (parts.length < 4) return;
             const date = parts[0];
             const calories = parseFloat(parts[2]) || 0;
@@ -353,6 +353,94 @@ function isDateConsecutive(newerDate, olderDate) {
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
     return diffDays === 1;
 }
+
+// Helper: Parse CSV line handling quoted fields
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current.trim());
+    return result;
+}
+
+// API: Get Heatmap Data
+app.get('/api/heatmap', (req, res) => {
+    fs.readFile(NUTRITION_LOG_PATH, 'utf8', (err, content) => {
+        if (err) return res.status(500).json({ error: 'Failed to read nutrition log' });
+
+        const lines = content.split('\n').slice(1); // Skip header
+        const dailyStats = new Map();
+        
+        // Aggregate daily totals
+        lines.forEach(line => {
+            if (!line.trim()) return;
+            const parts = parseCSVLine(line);
+            if (parts.length < 9) return;
+            
+            const date = parts[0];
+            const calories = parseFloat(parts[2]) || 0;
+            const protein = parseFloat(parts[3]) || 0;
+            const steps = parseFloat(parts[6]) || 0;
+            
+            if (!dailyStats.has(date)) {
+                dailyStats.set(date, {
+                    date,
+                    calories: 0,
+                    protein: 0,
+                    steps: steps, // Take highest steps value for the day
+                    entries: 0
+                });
+            }
+            
+            const stats = dailyStats.get(date);
+            stats.calories += calories;
+            stats.protein += protein;
+            stats.steps = Math.max(stats.steps, steps);
+            stats.entries++;
+        });
+
+        // Get last 30 days, fill in missing days
+        const today = new Date();
+        const result = [];
+        
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            const stats = dailyStats.get(dateStr) || {
+                date: dateStr,
+                calories: 0,
+                protein: 0,
+                steps: 0,
+                entries: 0
+            };
+
+            // Calculate completion percentages
+            result.unshift({
+                date: dateStr,
+                protein: Math.min(100, (stats.protein / 150) * 100),
+                calories: stats.calories > 0 ? (stats.calories <= 1800 ? 100 : Math.max(0, 100 - ((stats.calories - 1800) / 100 * 10))) : 0,
+                steps: Math.min(100, (stats.steps / 10000) * 100),
+                foodLog: stats.entries > 0 ? 100 : 0
+            });
+        }
+
+        res.json(result);
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`Life RPG Dashboard running on http://localhost:${PORT}`);
