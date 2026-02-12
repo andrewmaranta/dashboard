@@ -41,12 +41,13 @@ app.get('/api/daily-stats', (req, res) => {
 // API: Get Finance Data
 app.get('/api/finance', (req, res) => {
     fs.readFile(FINANCE_PATH, 'utf8', (err, content) => {
-        if (err) return res.json({ netWorth: '$0', emergencyFund: '$0', surplus: '$0' });
+        if (err) return res.json({ netWorth: '$0', emergencyFund: '$0', monthlySurplus: '$0' });
         try {
             const data = JSON.parse(content);
-            if (data.netWorth && data.emergencyFund && data.surplus) { res.json(data); } else { res.json({ netWorth: 'Error', emergencyFund: 'Error', surplus: 'Error' }); }
+            if (data.netWorth && data.emergencyFund) { res.json(data); } 
+            else { res.json({ netWorth: 'Error', emergencyFund: 'Error', monthlySurplus: 'Error' }); }
         } catch (e) {
-            res.json({ netWorth: 'Error', emergencyFund: 'Error', surplus: 'Error' });
+            res.json({ netWorth: 'Error', emergencyFund: 'Error', monthlySurplus: 'Error' });
         }
     });
 });

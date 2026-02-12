@@ -229,6 +229,7 @@
             <div class="nav-tab active" onclick="switchTab('daily')">Daily Rituals</div>
             <div class="nav-tab" onclick="switchTab('main')">Quest Log</div>
             <div class="nav-tab" onclick="switchTab('health')">Vitality</div>
+            <div class="nav-tab" onclick="switchTab('wealth')">Wealth</div>
         </div>
         <div id="daily" class="section active"><ul class="quest-list" id="daily-list"></ul></div>
         <div id="main" class="section"><ul class="quest-list" id="main-list"></ul></div>
@@ -237,6 +238,34 @@
             <div style="margin-top:20px; display:flex; justify-content:space-around; font-size:18px;">
                 <div>Weight: <span id="weight" style="color:var(--text-gold); font-weight:bold;">-</span></div>
                 <div>Body Fat: <span id="bf" style="color:var(--text-gold); font-weight:bold;">-</span></div>
+            </div>
+        </div>
+        <div id="wealth" class="section">
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size:16px; margin-bottom: 20px;">
+                <div style="text-align:center; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444;">Net Worth<br><span id="netWorth" style="color:var(--text-gold); font-weight:bold; font-size: 20px;">-</span></div>
+                <div style="text-align:center; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444;">Emergency Fund<br><span id="emergencyFund" style="color:var(--text-gold); font-weight:bold; font-size: 20px;">-</span></div>
+                <div style="text-align:center; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444;">Cash Reserve<br><span id="cashReserve" style="color:var(--text-gold); font-weight:bold; font-size: 20px;">-</span></div>
+                <div style="text-align:center; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444;">Monthly Income<br><span id="income" style="color:var(--text-gold); font-weight:bold; font-size: 20px;">-</span></div>
+                <div style="text-align:center; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444;">Burn Rate<br><span id="burnRate" style="color:#ff6b6b; font-weight:bold; font-size: 20px;">-</span></div>
+                <div style="text-align:center; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid #444;">Savings Rate<br><span id="savingsRate" style="color:#6bff6b; font-weight:bold; font-size: 20px;">-</span></div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 15px; border: 1px solid #444; margin-bottom: 15px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+                    <span>Emergency Fund Progress (target: $10,000)</span>
+                    <span id="efProgressText">0%</span>
+                </div>
+                <div style="height: 20px; background: #333; border-radius: 4px; overflow: hidden;">
+                    <div id="efProgressBar" style="height: 100%; background: linear-gradient(90deg, #b8860b, #ffd700); width: 0%; transition: width 0.5s;"></div>
+                </div>
+            </div>
+            <div style="background: rgba(0,0,0,0.3); padding: 15px; border: 1px solid #444;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+                    <span>Cash Buffer Progress (target: $5,000)</span>
+                    <span id="cbProgressText">0%</span>
+                </div>
+                <div style="height: 20px; background: #333; border-radius: 4px; overflow: hidden;">
+                    <div id="cbProgressBar" style="height: 100%; background: linear-gradient(90deg, #4a90d9, #6bb6ff); width: 0%; transition: width 0.5s;"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -253,6 +282,7 @@
             renderAttributes(qData.attributes); renderHeader(qData.profile);
             renderList('daily-list', qData.daily); renderList('main-list', qData.main);
             const hRes = await fetch('/api/health'); const hData = await hRes.json(); renderHealth(hData);
+            const fRes = await fetch('/api/finance'); const fData = await fRes.json(); renderFinance(fData);
         } catch (e) { console.error(e); }
     }
     function renderHeader(profile) { document.getElementById('char-class').textContent = profile.class; document.getElementById('level-badge').textContent = profile.level; }
@@ -280,6 +310,27 @@
         const last = data[data.length - 1]; document.getElementById('weight').textContent = last.weight + ' lbs'; document.getElementById('bf').textContent = last.bodyFat + '%';
         const ctx = document.getElementById('healthChart').getContext('2d');
         new Chart(ctx, { type: 'line', data: { labels: data.map(d => d.date), datasets: [{ label: 'Weight', data: data.map(d => d.weight), borderColor: '#c8a45c', backgroundColor: 'rgba(200, 164, 92, 0.1)', tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#888' }, grid: { color: '#333' } }, y: { ticks: { color: '#888' }, grid: { color: '#333' } } } } });
+    }
+    function renderFinance(data) {
+        document.getElementById('netWorth').textContent = data.netWorth || '-';
+        document.getElementById('emergencyFund').textContent = data.emergencyFund || '-';
+        document.getElementById('cashReserve').textContent = data.cashReserve || '-';
+        document.getElementById('income').textContent = data.income || '-';
+        document.getElementById('burnRate').textContent = data.burnRate || '-';
+        document.getElementById('savingsRate').textContent = data.savingsRate || '-';
+
+        // Progress bars
+        const efTarget = data.targets?.emergencyFund || 10000;
+        const efCurrent = parseInt((data.emergencyFund || '$0').replace(/[^0-9]/g, ''));
+        const efPercent = Math.min(100, Math.round((efCurrent / efTarget) * 100));
+        document.getElementById('efProgressBar').style.width = efPercent + '%';
+        document.getElementById('efProgressText').textContent = efPercent + '%';
+
+        const cbTarget = data.targets?.cashBuffer || 5000;
+        const cbCurrent = parseInt((data.cashReserve || '$0').replace(/[^0-9]/g, ''));
+        const cbPercent = Math.min(100, Math.round((cbCurrent / cbTarget) * 100));
+        document.getElementById('cbProgressBar').style.width = cbPercent + '%';
+        document.getElementById('cbProgressText').textContent = cbPercent + '%';
     }
     async function toggleQuest(text, shouldCheck) { if (shouldCheck) playSound(); await fetch('/api/quests/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questText: text }) }); loadData(); }
     function switchTab(tabName) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.getElementById(tabName).classList.add('active'); document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active')); event.currentTarget.classList.add('active'); }
