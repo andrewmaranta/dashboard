@@ -442,6 +442,96 @@ app.get('/api/heatmap', (req, res) => {
     });
 });
 
+// API: Get Campaign Goals
+app.get('/api/goals', (req, res) => {
+    fs.readFile(QUESTS_PATH, 'utf8', (err, content) => {
+        if (err) return res.status(500).json({ error: 'Failed to read quests' });
+        
+        const lines = content.split('\n');
+        let inCampaignSection = false;
+        let currentCampaign = null;
+        const campaigns = [];
+        
+        for (let line of lines) {
+            if (line.startsWith('## 🎯 Long-Term Goals')) {
+                inCampaignSection = true;
+                continue;
+            } else if (inCampaignSection && line.startsWith('## ')) {
+                break; // End of campaigns section
+            }
+            
+            if (!inCampaignSection) continue;
+            
+            // Start of new campaign
+            if (line.startsWith('### ')) {
+                if (currentCampaign) campaigns.push(currentCampaign);
+                const campaignMatch = line.match(/### [⚔️🏃💰📚🧘🎭] (.*?) \((.*?)\)/);
+                if (campaignMatch) {
+                    currentCampaign = {
+                        name: campaignMatch[1],
+                        attribute: campaignMatch[2],
+                        description: '',
+                        milestones: []
+                    };
+                }
+                continue;
+            }
+            
+            // Campaign description
+            if (line.startsWith('*') && currentCampaign) {
+                currentCampaign.description = line.replace(/^\*|\*$/g, '').trim();
+                continue;
+            }
+            
+            // Milestone
+            if (line.match(/- \[ \]/) && currentCampaign) {
+                const milestoneMatch = line.match(/- \[ \] (.*?) — (.*?) \(\+(.*?) XP\)/);
+                if (milestoneMatch) {
+                    currentCampaign.milestones.push({
+                        title: milestoneMatch[1],
+                        task: milestoneMatch[2],
+                        xp: parseInt(milestoneMatch[3]),
+                        completed: line.includes('[x]')
+                    });
+                }
+            }
+        }
+        
+        // Add the last campaign
+        if (currentCampaign) campaigns.push(currentCampaign);
+        
+        res.json(campaigns);
+    });
+});
+
+// API: Complete Dashboard Check-In
+app.post('/api/quest-complete', (req, res) => {
+    const { questName = "Dashboard Check-In" } = req.body;
+    fs.readFile(QUESTS_PATH, 'utf8', (err, content) => {
+        if (err) return res.status(500).json({ error: 'Failed to read quests' });
+        
+        let lines = content.split('\n');
+        let found = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes(questName) && !lines[i].includes('[x]')) {
+                lines[i] = lines[i].replace('[ ]', '[x]');
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            return res.status(404).json({ error: 'Quest not found' });
+        }
+        
+        fs.writeFile(QUESTS_PATH, lines.join('\n'), 'utf8', (err) => {
+            if (err) return res.status(500).json({ error: 'Failed to write quests' });
+            res.json({ success: true });
+        });
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Life RPG Dashboard running on http://localhost:${PORT}`);
 });

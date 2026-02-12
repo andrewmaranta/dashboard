@@ -491,6 +491,9 @@
             <div id="streaks-container">
                 <!-- Streaks will be inserted here -->
             </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="completeDashboardCheckIn()" class="timer-btn">Review Dashboard Complete</button>
+            </div>
         </div>
     </div>
     <div class="right-panel panel">
@@ -503,6 +506,7 @@
             <div class="nav-tab active" onclick="switchTab('daily')">Daily Rituals</div>
             <div class="nav-tab" onclick="switchTab('main')">Quest Log</div>
             <div class="nav-tab" onclick="switchTab('health')">Vitality</div>
+            <div class="nav-tab" onclick="switchTab('campaigns')">Campaigns</div>
             <div class="nav-tab" onclick="switchTab('wealth')">Wealth</div>
         </div>
         <div id="daily" class="section active">
@@ -523,6 +527,84 @@
             <div style="margin-top:20px; display:flex; justify-content:space-around; font-size:18px;">
                 <div>Weight: <span id="weight" style="color:var(--text-gold); font-weight:bold;">-</span></div>
                 <div>Body Fat: <span id="bf" style="color:var(--text-gold); font-weight:bold;">-</span></div>
+            </div>
+        </div>
+        <div id="campaigns" class="section">
+            <style>
+                .campaign-list {
+                    display: grid;
+                    gap: 20px;
+                }
+                .campaign-card {
+                    background: rgba(0,0,0,0.3);
+                    border: 1px solid var(--border-gold);
+                    padding: 20px;
+                    transition: all 0.3s ease;
+                }
+                .campaign-card:hover {
+                    border-color: var(--text-gold);
+                    box-shadow: var(--glow);
+                }
+                .campaign-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    margin-bottom: 15px;
+                }
+                .campaign-title {
+                    font-family: 'Cinzel', serif;
+                    color: var(--text-gold);
+                    font-size: 18px;
+                    flex-grow: 1;
+                }
+                .campaign-attr {
+                    font-size: 14px;
+                    padding: 4px 10px;
+                    border: 1px solid var(--border-gold);
+                    border-radius: 12px;
+                }
+                .campaign-desc {
+                    color: #888;
+                    font-style: italic;
+                    margin-bottom: 15px;
+                }
+                .milestone-list {
+                    list-style: none;
+                    padding: 0;
+                }
+                .milestone-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 8px 0;
+                    border-top: 1px solid #333;
+                }
+                .milestone-check {
+                    width: 20px;
+                    height: 20px;
+                    border: 2px solid var(--border-gold);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                }
+                .milestone-check.completed {
+                    background: var(--text-gold);
+                    color: #000;
+                }
+                .milestone-text {
+                    flex-grow: 1;
+                }
+                .milestone-xp {
+                    font-size: 12px;
+                    color: var(--text-gold);
+                    border: 1px solid var(--border-gold);
+                    padding: 2px 8px;
+                    border-radius: 10px;
+                }
+            </style>
+            <div class="campaign-list" id="campaign-list">
+                <!-- Campaigns will be inserted here -->
             </div>
         </div>
         <div id="wealth" class="section">
@@ -645,11 +727,11 @@
 <script>
     const audio = new Audio('audio.mp3'); audio.volume = 0.4;
     function playSound() { audio.currentTime = 0; audio.play().catch(e => console.log('Audio blocked')); }
-    const descriptions = { STR: "Power", DEX: "Agility", CON: "Stamina", INT: "Acuity", WIS: "Insight", CHA: "Confidence" };
+    const descriptions = { STR: "Power", DEX: "Agility", AUR: "Prosperity", INT: "Acuity", MND: "Wellness", CHA: "Confidence" };
     
     function renderRadarChart(attrs) {
         const ctx = document.getElementById('attributeRadar').getContext('2d');
-        const labels = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+        const labels = ['STR', 'DEX', 'AUR', 'INT', 'MND', 'CHA'];
         const values = labels.map(attr => {
             const score = attrs[attr]?.score || 10;
             return Math.max(0, (score - 10) * 10); // Convert to percentage (10 = 0%, 20 = 100%)
@@ -707,9 +789,12 @@
         container.innerHTML = '';
 
         const streakTypes = [
-            { id: 'foodLogStreak', label: 'Food Log', icon: 'L' },
-            { id: 'calorieStreak', label: 'Calorie Goal', icon: 'C' },
-            { id: 'proteinStreak', label: 'Protein Goal', icon: 'P' }
+            { id: 'calorieStreak', label: 'Calorie Gate', icon: 'C', attr: 'DEX' },
+            { id: 'proteinStreak', label: 'Protein Ritual', icon: 'P', attr: 'STR' },
+            { id: 'readingStreak', label: "Reader's Vow", icon: 'R', attr: 'INT' },
+            { id: 'digitalStreak', label: 'Digital Sunset', icon: 'D', attr: 'MND' },
+            { id: 'socialStreak', label: "Stranger's Greeting", icon: 'S', attr: 'CHA' },
+            { id: 'workoutStreak', label: 'Weekly Workouts', icon: 'W', attr: 'STR', weekly: true }
         ];
         
         // Add CSS for streak icons
@@ -814,10 +899,12 @@
 
         // Add habit rows
         const habits = [
-            { key: 'protein', label: 'Protein ≥150g' },
-            { key: 'calories', label: 'Calories ≤1800' },
-            { key: 'steps', label: 'Steps 10k' },
-            { key: 'foodLog', label: 'Logged' }
+            { key: 'calories', label: 'Calorie Gate (DEX)' },
+            { key: 'protein', label: 'Protein Ritual (STR)' },
+            { key: 'reading', label: "Reader's Vow (INT)" },
+            { key: 'digital', label: 'Digital Sunset (MND)' },
+            { key: 'social', label: "Stranger's Greeting (CHA)" },
+            { key: 'workout', label: 'Workout (STR)', weekly: true }
         ];
         
         habits.forEach(habit => {
@@ -894,7 +981,7 @@
     function renderHeader(profile) { document.getElementById('char-class').textContent = profile.class; document.getElementById('level-badge').textContent = profile.level; }
     function renderAttributes(attrs) {
         const container = document.getElementById('attributes-list'); container.innerHTML = '';
-        ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'].forEach(key => {
+        ['STR', 'DEX', 'AUR', 'INT', 'MND', 'CHA'].forEach(key => {
             const attr = attrs[key] || { score: 10, xp: 0, max: 100 };
             const mod = Math.floor((attr.score - 10) / 2);
             const percent = Math.min(100, (attr.xp / attr.max) * 100);
@@ -941,6 +1028,93 @@
     }
     async function toggleQuest(text, shouldCheck) { if (shouldCheck) playSound(); await fetch('/api/quests/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questText: text }) }); loadData(); }
     function switchTab(tabName) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.getElementById(tabName).classList.add('active'); document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active')); const clickedTab = Array.from(document.querySelectorAll('.nav-tab')).find(el => el.getAttribute('onclick')?.includes(tabName)); if (clickedTab) clickedTab.classList.add('active'); }
+    // Campaign functions
+    async function loadCampaigns() {
+        try {
+            const response = await fetch('/api/goals');
+            const campaigns = await response.json();
+            renderCampaigns(campaigns);
+        } catch (e) {
+            console.error('Failed to load campaigns:', e);
+        }
+    }
+
+    function renderCampaigns(campaigns) {
+        const container = document.getElementById('campaign-list');
+        container.innerHTML = '';
+        
+        campaigns.forEach(campaign => {
+            const card = document.createElement('div');
+            card.className = 'campaign-card';
+            
+            const milestonesList = campaign.milestones.map(milestone => `
+                <li class="milestone-item">
+                    <div class="milestone-check ${milestone.completed ? 'completed' : ''}" onclick="toggleMilestone('${milestone.title}')">
+                        ${milestone.completed ? '✓' : ''}
+                    </div>
+                    <div class="milestone-text">
+                        <strong>${milestone.title}</strong> — ${milestone.task}
+                    </div>
+                    <div class="milestone-xp">+${milestone.xp} XP</div>
+                </li>
+            `).join('');
+            
+            card.innerHTML = `
+                <div class="campaign-header">
+                    <div class="campaign-title">${campaign.name}</div>
+                    <div class="campaign-attr">${campaign.attribute}</div>
+                </div>
+                <div class="campaign-desc">${campaign.description}</div>
+                <ul class="milestone-list">
+                    ${milestonesList}
+                </ul>
+            `;
+            
+            container.appendChild(card);
+        });
+    }
+
+    async function completeDashboardCheckIn() {
+        try {
+            const response = await fetch('/api/quest-complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    questName: 'Dashboard Check-In'
+                })
+            });
+            
+            if (response.ok) {
+                playSound();
+                loadData(); // Refresh dashboard data
+            }
+        } catch (e) {
+            console.error('Failed to complete dashboard check-in:', e);
+        }
+    }
+
+    async function init() {
+        await loadData();
+        await loadCampaigns();
+        // Load streaks and heatmap
+        try {
+            const [streaksRes, heatmapRes] = await Promise.all([
+                fetch('/api/streaks'),
+                fetch('/api/heatmap')
+            ]);
+            const [streaksData, heatmapData] = await Promise.all([
+                streaksRes.json(),
+                heatmapRes.json()
+            ]);
+            renderStreaks(streaksData);
+            renderHeatmap(heatmapData);
+        } catch (e) {
+            console.error('Failed to load data:', e);
+        }
+    }
+
     init();
 </script>
 </body>
