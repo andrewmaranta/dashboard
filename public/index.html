@@ -216,16 +216,10 @@
             <canvas id="attributeRadar"></canvas>
         </div>
         <div style="margin-top:20px; border-top:1px solid #444; padding-top:15px;">
-            <h3 style="font-size:16px; text-align:center; margin-bottom:15px;">Habit Streaks</h3>
+            <h3 style="font-size:16px; text-align:center; margin-bottom:15px;">Habit Streaks 🔥</h3>
             <div id="streaks-container">
                 <!-- Streaks will be inserted here -->
             </div>
-        </div>
-        <div class="pomodoro-ritual">
-            <h3 style="font-size:14px; color:#888;">Focus Ritual</h3>
-            <div id="timer-display">25:00</div>
-            <button class="timer-btn" id="start-pause-btn">Start</button>
-            <button class="timer-btn" onclick="resetTimer()">Reset</button>
         </div>
     </div>
     <div class="right-panel panel">
@@ -439,25 +433,7 @@
         document.getElementById('cbProgressText').textContent = cbPercent + '%';
     }
     async function toggleQuest(text, shouldCheck) { if (shouldCheck) playSound(); await fetch('/api/quests/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questText: text }) }); loadData(); }
-    function switchTab(tabName) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.getElementById(tabName).classList.add('active'); document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active')); event.currentTarget.classList.add('active'); }
-
-    /* POMODORO LOGIC */
-    let timerInterval, timeLeft = 25 * 60, isRunning = false;
-    const timerDisplay = document.getElementById('timer-display'), startPauseBtn = document.getElementById('start-pause-btn');
-    function updateTimer() { const m = Math.floor(timeLeft / 60), s = timeLeft % 60; timerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; }
-    function toggleTimer() {
-        if (isRunning) { clearInterval(timerInterval); startPauseBtn.textContent = 'Start'; }
-        else { 
-            timerInterval = setInterval(() => { 
-                timeLeft--; updateTimer(); 
-                if (timeLeft <= 0) { clearInterval(timerInterval); playSound(); resetTimer(); alert('Ritual Complete!'); }
-            }, 1000); 
-            startPauseBtn.textContent = 'Pause';
-        }
-        isRunning = !isRunning;
-    }
-    function resetTimer() { clearInterval(timerInterval); isRunning = false; timeLeft = 25 * 60; updateTimer(); startPauseBtn.textContent = 'Start'; }
-    startPauseBtn.addEventListener('click', toggleTimer);
+    function switchTab(tabName) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.getElementById(tabName).classList.add('active'); document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active')); const clickedTab = Array.from(document.querySelectorAll('.nav-tab')).find(el => el.getAttribute('onclick')?.includes(tabName)); if (clickedTab) clickedTab.classList.add('active'); }
     init();
 </script>
 </body>

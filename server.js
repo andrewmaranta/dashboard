@@ -283,46 +283,57 @@ app.get('/api/streaks', (req, res) => {
         // Aggregate daily totals
         lines.forEach(line => {
             if (!line.trim()) return;
-            const [date, , calories, protein] = line.split(',');
+            const parts = line.split(',');
+            if (parts.length < 4) return;
+            const date = parts[0];
+            const calories = parseFloat(parts[2]) || 0;
+            const protein = parseFloat(parts[3]) || 0;
+            
             if (!dailyStats.has(date)) {
-                dailyStats.set(date, { calories: 0, protein: 0, hasEntry: true });
+                dailyStats.set(date, { calories: 0, protein: 0 });
             }
             const stats = dailyStats.get(date);
-            stats.calories += parseFloat(calories) || 0;
-            stats.protein += parseFloat(protein) || 0;
+            stats.calories += calories;
+            stats.protein += protein;
         });
 
-        // Convert to array and sort by date
+        // Convert to array and sort by date descending (newest first)
         const sortedDays = Array.from(dailyStats.entries())
-            .sort((a, b) => new Date(a[0]) - new Date(b[0]));
+            .sort((a, b) => new Date(b[0]) - new Date(a[0]));
+
+        // Get today's and yesterday's dates for comparison
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        
+        // Check if we have data for today or yesterday (streak only counts if recent)
+        const mostRecentDate = sortedDays.length > 0 ? sortedDays[0][0] : null;
+        const hasRecentData = mostRecentDate === today || mostRecentDate === yesterday;
 
         let foodLogStreak = 0;
         let calorieStreak = 0;
         let proteinStreak = 0;
 
-        // Calculate streaks from the most recent day
-        for (let i = sortedDays.length - 1; i >= 0; i--) {
-            const [, stats] = sortedDays[i];
-            
-            // Food Log Streak: Any entry
-            if (stats.hasEntry) {
+        if (hasRecentData) {
+            // Calculate each streak independently
+            for (let i = 0; i < sortedDays.length; i++) {
+                const [, stats] = sortedDays[i];
+                const prevDate = i > 0 ? sortedDays[i-1][0] : null;
+                const currDate = sortedDays[i][0];
+                
+                // Check if this day is consecutive to the previous
+                const isConsecutive = i === 0 || isDateConsecutive(prevDate, currDate);
+                
+                if (!isConsecutive && i > 0) break;
+                
                 foodLogStreak++;
-            } else {
-                break;
-            }
-
-            // Calorie Goal Streak: ≤ 1800 calories
-            if (stats.calories <= 1800) {
-                calorieStreak++;
-            } else {
-                break;
-            }
-
-            // Protein Goal Streak: ≥ 150g protein
-            if (stats.protein >= 150) {
-                proteinStreak++;
-            } else {
-                break;
+                
+                if (stats.calories <= 1800 && stats.calories > 0) {
+                    calorieStreak++;
+                }
+                
+                if (stats.protein >= 150) {
+                    proteinStreak++;
+                }
             }
         }
 
@@ -333,6 +344,15 @@ app.get('/api/streaks', (req, res) => {
         });
     });
 });
+
+// Helper: Check if dates are consecutive
+function isDateConsecutive(newerDate, olderDate) {
+    const d1 = new Date(newerDate);
+    const d2 = new Date(olderDate);
+    const diffTime = d1 - d2;
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return diffDays === 1;
+}
 
 app.listen(PORT, () => {
     console.log(`Life RPG Dashboard running on http://localhost:${PORT}`);
