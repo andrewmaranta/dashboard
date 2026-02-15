@@ -27,6 +27,8 @@
             --accent-glow: drop-shadow(0 0 5px rgba(122, 158, 126, 0.2));
         }
 
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&display=swap');
+        
         @keyframes checkGlow {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -35,7 +37,6 @@
         .gold-glow {
             filter: var(--accent-glow);
         }
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&display=swap');
         body {
             font-family: 'Nunito', -apple-system, sans-serif;
             background-color: var(--bg-dark);
@@ -206,7 +207,7 @@
             box-shadow: 0 4px 10px rgba(122, 158, 126, 0.25);
         }
         .nav-tab.active::before { display: none; }
-        .goal-list { list-style: none; padding: 0; }
+        .goal-list, .quest-list { list-style: none; padding: 0; }
         .goal-item {
             background: rgba(255,255,255,0.03);
             margin-bottom: 12px;
@@ -411,13 +412,74 @@
             .heatmap-row {
                 grid-template-columns: 60px repeat(7, 1fr);
             }
-            .quest-text {
+            .goal-text {
                 font-size: 14px;
             }
             .attr-icon {
                 width: 40px;
                 height: 40px;
                 font-size: 16px;
+            }
+        }
+        
+        /* Mobile phone breakpoint (375px and below) */
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { gap: 10px; }
+            .panel { padding: 15px; border-radius: 16px; }
+            h1 { font-size: 1.6em; }
+            h2 { font-size: 1.3em; }
+            h3 { font-size: 1.1em; }
+            .nav-tabs {
+                flex-wrap: wrap;
+                gap: 5px;
+                padding-bottom: 10px;
+            }
+            .nav-tab {
+                flex: 1 1 calc(33% - 5px);
+                min-width: auto;
+                padding: 8px 5px;
+                font-size: 12px;
+                border-radius: 16px;
+            }
+            .level-badge {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            .attr-block {
+                padding: 10px;
+            }
+            .attr-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+                margin-right: 10px;
+            }
+            .goal-item {
+                padding: 12px;
+            }
+            .checkbox-custom {
+                width: 20px;
+                height: 20px;
+                margin-right: 10px;
+            }
+            .goal-text {
+                font-size: 13px;
+            }
+            .heatmap-day-labels {
+                grid-template-columns: 50px repeat(7, 1fr);
+                font-size: 9px;
+            }
+            .heatmap-row {
+                grid-template-columns: 50px repeat(7, 1fr);
+            }
+            .heatmap-label {
+                font-size: 9px;
+            }
+            .chart-container {
+                padding: 10px;
+                height: 200px !important;
             }
         }
         
@@ -975,10 +1037,34 @@
         document.getElementById('cbProgressBar').style.width = cbPercent + '%';
         document.getElementById('cbProgressText').textContent = cbPercent + '%';
     }
-    async function toggleGoal(text, shouldCheck) { if (shouldCheck) playSound(); await fetch('/api/goals/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questText: text }) }); loadData(); }
+    async function toggleGoal(text, shouldCheck) { if (shouldCheck) playSound(); await fetch('/api/quests/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questText: text }) }); loadData(); }
     function switchTab(tabName) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.getElementById(tabName).classList.add('active'); document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active')); const clickedTab = Array.from(document.querySelectorAll('.nav-tab')).find(el => el.getAttribute('onclick')?.includes(tabName)); if (clickedTab) clickedTab.classList.add('active'); }
-    // Campaign functions (defined above)
-    // ... completeDashboardCheckIn, updateDateDisplay
+    
+    async function completeDashboardCheckIn() {
+        try {
+            await fetch('/api/quest-complete', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ questName: "Meta Habit: The Dashboard Check-In" }) 
+            });
+            playSound();
+            loadData();
+        } catch (e) {
+            console.error('Failed to complete check-in:', e);
+        }
+    }
+    
+    function updateDateDisplay() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+    }
+    
+    // Initialize date display on load
+    updateDateDisplay();
+    
+    // Initialize the app
+    init();
 </script>
 </body>
 </html>
