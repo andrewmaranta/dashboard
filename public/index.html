@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life RPG: Astral Monk Dashboard</title>
+    <title>Life Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* BG3 / Dark Fantasy Theme */
@@ -38,7 +38,7 @@
 
         .gold-glow {
             filter: var(--accent-glow);
-            animation: pulseGlow 2s ease-in-out infinite;
+            /* animation: pulseGlow 2s ease-in-out infinite; */
         }
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Alegreya+Sans:wght@300;400;700&display=swap');
         body {
@@ -492,12 +492,12 @@
             <canvas id="attributeRadar"></canvas>
         </div>
         <div style="margin-top:20px; border-top:1px solid #444; padding-top:15px;">
-            <h3 style="font-size:16px; text-align:center; margin-bottom:15px;">Habit Streaks 🔥</h3>
+            <h3 style="font-size:16px; text-align:center; margin-bottom:15px;">Current Streaks</h3>
             <div id="streaks-container">
                 <!-- Streaks will be inserted here -->
             </div>
             <div style="text-align: center; margin-top: 15px;">
-                <button onclick="completeDashboardCheckIn()" class="timer-btn">Review Dashboard Complete</button>
+                <button onclick="completeDashboardCheckIn()" class="timer-btn">Complete Daily Review</button>
             </div>
         </div>
     </div>
@@ -509,15 +509,15 @@
             <div class="level-badge" id="level-badge">1</div>
         </div>
         <div class="nav-tabs">
-            <div class="nav-tab active" onclick="switchTab('daily')">Daily Rituals</div>
-            <div class="nav-tab" onclick="switchTab('main')">Quest Log</div>
-            <div class="nav-tab" onclick="switchTab('health')">Vitality</div>
+            <div class="nav-tab active" onclick="switchTab('daily')">Daily Habits</div>
+            <div class="nav-tab" onclick="switchTab('main')">Daily Goals</div>
+            <div class="nav-tab" onclick="switchTab('health')">Health</div>
             <div class="nav-tab" onclick="switchTab('campaigns')">Campaigns</div>
-            <div class="nav-tab" onclick="switchTab('wealth')">Wealth</div>
+            <div class="nav-tab" onclick="switchTab('wealth')">Finances</div>
         </div>
         <div id="daily" class="section active">
             <div class="habit-heatmap panel" style="margin-bottom: 20px;">
-                <h3 style="margin-bottom: 15px;">Daily Habit Tracker</h3>
+                <h3 style="margin-bottom: 15px;">Daily Habits</h3>
                 <div id="heatmap-grid" class="heatmap-grid"></div>
                 <div class="heatmap-legend" style="margin-top: 10px;">
                     <div class="legend-item"><div class="legend-box" style="background: #333"></div>Missed (&lt;50%)</div>
@@ -795,12 +795,12 @@
         container.innerHTML = '';
 
         const streakTypes = [
-            { id: 'calorieStreak', label: 'Calorie Gate', icon: 'C', attr: 'DEX' },
-            { id: 'proteinStreak', label: 'Protein Ritual', icon: 'P', attr: 'STR' },
-            { id: 'readingStreak', label: "Reader's Vow", icon: 'R', attr: 'INT' },
-            { id: 'digitalStreak', label: 'Digital Sunset', icon: 'D', attr: 'MND' },
-            { id: 'socialStreak', label: "Stranger's Greeting", icon: 'S', attr: 'CHA' },
-            { id: 'workoutStreak', label: 'Weekly Workouts', icon: 'W', attr: 'STR', weekly: true }
+            { id: 'calorieStreak', label: 'Calories', icon: 'C', attr: 'DEX' },
+            { id: 'proteinStreak', label: 'Protein', icon: 'P', attr: 'STR' },
+            { id: 'readingStreak', label: "Reading", icon: 'R', attr: 'INT' },
+            { id: 'digitalStreak', label: 'Screen Time', icon: 'D', attr: 'MND' },
+            { id: 'socialStreak', label: "Social", icon: 'S', attr: 'CHA' },
+            { id: 'workoutStreak', label: 'Workouts', icon: 'W', attr: 'STR', weekly: true }
         ];
         
         // Add CSS for streak icons
@@ -905,12 +905,12 @@
 
         // Add habit rows
         const habits = [
-            { key: 'calories', label: 'Calorie Gate (DEX)' },
-            { key: 'protein', label: 'Protein Ritual (STR)' },
-            { key: 'reading', label: "Reader's Vow (INT)" },
-            { key: 'digital', label: 'Digital Sunset (MND)' },
-            { key: 'social', label: "Stranger's Greeting (CHA)" },
-            { key: 'workout', label: 'Workout (STR)', weekly: true }
+            { key: 'calories', label: 'Calories (DEX)' },
+            { key: 'protein', label: 'Protein (STR)' },
+            { key: 'reading', label: "Reading (INT)" },
+            { key: 'digital', label: 'Screen Time (MND)' },
+            { key: 'social', label: "Social (CHA)" },
+            { key: 'workout', label: 'Workouts (STR)', weekly: true }
         ];
         
         habits.forEach(habit => {
