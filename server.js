@@ -14,27 +14,64 @@ const WEIGHT_LOG_PATH = path.join(__dirname, '../nutrition/weight_log.md');
 const QUESTS_PATH = path.join(__dirname, '../quests.md');
 const FINANCE_PATH = path.join(__dirname, '../finance/summary.json');
 const NUTRITION_LOG_PATH = path.join(__dirname, '../nutrition/log.csv');
+const HABITS_LOG_PATH = path.join(__dirname, '../habits/log.csv');
 
 // API: Get Daily Nutrition/Activity
 app.get('/api/daily-stats', (req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Read nutrition log
     fs.readFile(NUTRITION_LOG_PATH, 'utf8', (err, content) => {
-        if (err) return res.json({ calories: 0, protein: 0, steps: 0, water: 0 });
+        let stats = { calories: 0, protein: 0, steps: 0, water: 0, habits: {} };
         
-        const today = new Date().toISOString().split('T')[0];
-        const lines = content.split('\n');
-        let stats = { calories: 0, protein: 0, steps: 0, water: 0 };
-        
-        // Skip header, sum values for today
-        for (let i = 1; i < lines.length; i++) {
-            const parts = parseCSVLine(lines[i]);
-            if (parts[0] === today) {
-                stats.calories += isNaN(parseFloat(parts[2])) ? 0 : parseFloat(parts[2]);
-                stats.protein += isNaN(parseFloat(parts[3])) ? 0 : parseFloat(parts[3]);
-                stats.steps = Math.max(stats.steps, isNaN(parseFloat(parts[6])) ? 0 : parseFloat(parts[6]));
-                stats.water = Math.max(stats.water, isNaN(parseFloat(parts[8])) ? 0 : parseFloat(parts[8]));
+        if (!err) {
+            const lines = content.split('\n');
+            // Skip header, sum values for today
+            for (let i = 1; i < lines.length; i++) {
+                const parts = parseCSVLine(lines[i]);
+                if (parts[0] === today) {
+                    stats.calories += isNaN(parseFloat(parts[2])) ? 0 : parseFloat(parts[2]);
+                    stats.protein += isNaN(parseFloat(parts[3])) ? 0 : parseFloat(parts[3]);
+                    stats.steps = Math.max(stats.steps, isNaN(parseFloat(parts[6])) ? 0 : parseFloat(parts[6]));
+                    stats.water = Math.max(stats.water, isNaN(parseFloat(parts[8])) ? 0 : parseFloat(parts[8]));
+                }
             }
         }
-        res.json(stats);
+        
+        // Read habits log for today's completions
+        fs.readFile(HABITS_LOG_PATH, 'utf8', (err, content) => {
+            if (!err) {
+                const habits = parseHabitsLog(content);
+                
+                // Define habit mapping to normalized names
+                const habitMapping = {
+                    'Workout': 'workout',
+                    'Read20Min': 'read20Min',
+                    "The Reader's Vow": 'read20Min',
+                    'DigitalSunset': 'digitalSunset',
+                    'Off screens 10pm': 'digitalSunset',
+                    'SocialInteraction': 'socialInteraction',
+                    "Stranger's Greeting": 'socialInteraction',
+                    'Medication': 'medication',
+                    'The Vital Dose': 'medication'
+                };
+                
+                // Track today's habit completions
+                const todayHabits = {};
+                habits.forEach(h => {
+                    if (h.date === today) {
+                        const normalized = habitMapping[h.habit];
+                        if (normalized) {
+                            todayHabits[normalized] = true;
+                        }
+                    }
+                });
+                
+                stats.habits = todayHabits;
+            }
+            
+            res.json(stats);
+        });
     });
 });
 
@@ -158,6 +195,35 @@ function parseQuests(markdown) {
         }
     }
     return result;
+}
+
+// Helper: Parse habits CSV log
+function parseHabitsLog(content) {
+    try {
+        if (!content || !content.trim()) return [];
+        
+        const lines = content.split('\n').slice(1); // Skip header
+        const habits = [];
+        
+        for (const line of lines) {
+            if (!line.trim()) continue;
+            
+            const parts = parseCSVLine(line);
+            if (parts.length < 4) continue;
+            
+            const date = parts[0];
+            const habit = parts[1];
+            const duration = parts[2];
+            const notes = parts[3] || '';
+            
+            habits.push({ date, habit, duration, notes });
+        }
+        
+        return habits;
+    } catch (err) {
+        console.error('Error parsing habits log:', err);
+        return [];
+    }
 }
 
 function parseQuestLine(line) {
@@ -544,6 +610,138 @@ app.post('/api/quest-complete', (req, res) => {
             if (err) return res.status(500).json({ error: 'Failed to write quests' });
             res.json({ success: true });
         });
+    });
+});
+
+// API: Get Habits Weekly Count
+app.get('/api/habits/weekly', (req, res) => {
+    fs.readFile(HABITS_LOG_PATH, 'utf8', (err, content) => {
+        if (err) return res.json({ habits: [] });
+        
+        const habits = parseHabitsLog(content);
+        
+        // Get current week dates (Mon-Sun)
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0 = Sun, 1 = Mon, ...
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1; // If Sunday, go back 6 days, else go to Monday
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - dayOfWeek + mondayOffset);
+        weekStart.setHours(0, 0, 0, 0);
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+        
+        // Filter habits for current week
+        const weekHabits = habits.filter(h => {
+            const habitDate = new Date(h.date);
+            return habitDate >= weekStart && habitDate <= weekEnd;
+        });
+        
+        // Define habit mapping and targets
+        const habitMapping = {
+            'Workout': { name: 'Workout', target: 3 },
+            'Read20Min': { name: 'Read20Min', target: 7 },
+            "The Reader's Vow": { name: 'Read20Min', target: 7 },
+            'DigitalSunset': { name: 'DigitalSunset', target: 7 },
+            'Off screens 10pm': { name: 'DigitalSunset', target: 7 },
+            'SocialInteraction': { name: 'SocialInteraction', target: 7 },
+            "Stranger's Greeting": { name: 'SocialInteraction', target: 7 },
+            'Medication': { name: 'Medication', target: 7 },
+            'The Vital Dose': { name: 'Medication', target: 7 }
+        };
+        
+        // Count occurrences
+        const counts = {};
+        weekHabits.forEach(h => {
+            const mapping = habitMapping[h.habit];
+            if (mapping) {
+                counts[mapping.name] = (counts[mapping.name] || 0) + 1;
+            }
+        });
+        
+        // Build response
+        const result = Object.entries({
+            'Workout': 3,
+            'Read20Min': 7,
+            'DigitalSunset': 7,
+            'SocialInteraction': 7,
+            'Medication': 7
+        }).map(([name, target]) => ({
+            name,
+            count: counts[name] || 0,
+            target
+        }));
+        
+        res.json({ habits: result });
+    });
+});
+
+// API: Get Habits Streaks
+app.get('/api/habits/streaks', (req, res) => {
+    fs.readFile(HABITS_LOG_PATH, 'utf8', (err, content) => {
+        if (err) return res.json({ habits: [] });
+        
+        const habits = parseHabitsLog(content);
+        
+        // Define habit mapping
+        const habitMapping = {
+            'Workout': 'Workout',
+            'Read20Min': 'Read20Min',
+            "The Reader's Vow": 'Read20Min',
+            'DigitalSunset': 'DigitalSunset',
+            'Off screens 10pm': 'DigitalSunset',
+            'SocialInteraction': 'SocialInteraction',
+            "Stranger's Greeting": 'SocialInteraction',
+            'Medication': 'Medication',
+            'The Vital Dose': 'Medication'
+        };
+        
+        // Group habits by normalized name and date
+        const habitsByName = {};
+        habits.forEach(h => {
+            const normalizedName = habitMapping[h.habit];
+            if (!normalizedName) return;
+            
+            if (!habitsByName[normalizedName]) {
+                habitsByName[normalizedName] = new Set();
+            }
+            habitsByName[normalizedName].add(h.date);
+        });
+        
+        // Calculate streaks for each habit
+        const today = new Date().toISOString().split('T')[0];
+        const result = Object.entries({
+            'Workout': [],
+            'Read20Min': [],
+            'DigitalSunset': [],
+            'SocialInteraction': [],
+            'Medication': []
+        }).map(([name, _]) => {
+            const dates = habitsByName[name] ? Array.from(habitsByName[name]).sort().reverse() : [];
+            let streak = 0;
+            
+            if (dates.length > 0) {
+                // Check if today or yesterday has data (streak only counts if recent)
+                const mostRecent = dates[0];
+                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                
+                if (mostRecent === today || mostRecent === yesterday) {
+                    streak = 1;
+                    for (let i = 1; i < dates.length; i++) {
+                        if (isDateConsecutive(dates[i-1], dates[i])) {
+                            streak++;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return { name, streak };
+        });
+        
+        res.json({ habits: result });
     });
 });
 

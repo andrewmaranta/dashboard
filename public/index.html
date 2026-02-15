@@ -505,6 +505,7 @@
         <div class="header-panel">
             <h1 id="char-name">Andrew</h1>
             <div style="color:#888; margin-top:5px; font-family:'Alegreya Sans', sans-serif; font-size:18px;" id="char-class">Level 1 Astral Monk</div>
+            <div style="color:var(--text-gold); margin-top:10px; font-family:'Cinzel', serif; font-size:16px;" id="current-date"></div>
             <div class="level-badge" id="level-badge">1</div>
         </div>
         <div class="nav-tabs">
@@ -1100,7 +1101,23 @@
         }
     }
 
+    function updateDateDisplay() {
+        // Use local date (same logic as heatmap) to avoid timezone issues
+        const now = new Date();
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = days[now.getDay()];
+        const dayNum = now.getDate();
+        
+        // Add ordinal suffix
+        const suffixes = ['th', 'st', 'nd', 'rd'];
+        const v = dayNum % 100;
+        const suffix = (v >= 11 && v <= 13) ? 'th' : suffixes[v % 10] || 'th';
+        
+        document.getElementById('current-date').textContent = `${dayName} ${dayNum}${suffix}`;
+    }
+
     async function init() {
+        updateDateDisplay();
         await loadData();
         await loadCampaigns();
         // Load streaks and heatmap
