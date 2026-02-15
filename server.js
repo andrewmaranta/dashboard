@@ -115,7 +115,7 @@ function parseQuests(markdown) {
     const lines = markdown.split('\n');
     let section = '';
     const result = {
-        profile: { class: 'Unknown', level: 1, xp: 0, xpMax: 100 },
+        profile: { class: 'Phase 1', level: 1, xp: 0, xpMax: 100 },
         attributes: {},
         daily: [],
         main: [],
@@ -129,10 +129,10 @@ function parseQuests(markdown) {
         const trimmed = line.trim();
         
         // Detect Sections
-        if (trimmed.startsWith('## Profile')) { section = 'profile'; continue; }
-        else if (trimmed.startsWith('## Attributes')) { section = 'attributes'; continue; }
-        else if (trimmed.startsWith('## ⚡ Core Habits')) { section = 'daily'; continue; }
-        else if (trimmed.startsWith('## 🎯 Long-Term Goals')) { 
+        if (trimmed.startsWith('## Current Phase')) { section = 'profile'; continue; }
+        else if (trimmed.startsWith('## Dimensions')) { section = 'attributes'; continue; }
+        else if (trimmed.startsWith('## Daily Habits')) { section = 'daily'; continue; }
+        else if (trimmed.startsWith('## Long-Term Goals')) { 
             section = 'main'; 
             continue; 
         }
@@ -140,17 +140,24 @@ function parseQuests(markdown) {
 
         // Logic per section
         if (section === 'profile') {
-            if (trimmed.startsWith('- **Class:**')) result.profile.class = trimmed.replace('- **Class:**', '').replace(/\*\*/g, '').trim();
-            if (trimmed.startsWith('- **Total Level:**')) {
-                 const levelPart = trimmed.split(':')[1] || '1';
-                 result.profile.level = parseInt(levelPart.trim()) || 1;
+            if (trimmed.startsWith('**Phase')) {
+                const phaseMatch = trimmed.match(/\*\*Phase (\d+)\*\*/);
+                if (phaseMatch) {
+                    result.profile.class = `Phase ${phaseMatch[1]}`;
+                    result.profile.level = parseInt(phaseMatch[1]) || 1;
+                }
             }
         } 
         else if (section === 'attributes') {
-            const attrMatch = trimmed.match(/- \*\*(.*?) \(.*?\):\*\* (\d+) \| (\d+) \/ (\d+)/);
+            // Parse table rows: | PWR | Power | 10 | 0 / 100 |
+            const attrMatch = trimmed.match(/\| (\w+) \| (.*?) \| (\d+) \| (\d+) \/ (\d+) \|/);
             if (attrMatch) {
-                const attr = attrMatch[1];
-                result.attributes[attr] = { score: parseInt(attrMatch[2]), xp: parseInt(attrMatch[3]), max: parseInt(attrMatch[4]) };
+                const attrCode = attrMatch[1]; // PWR, AGI, etc.
+                result.attributes[attrCode] = { 
+                    score: parseInt(attrMatch[3]), 
+                    xp: parseInt(attrMatch[4]), 
+                    max: parseInt(attrMatch[5]) 
+                };
             }
         } 
         else if (section === 'daily') {

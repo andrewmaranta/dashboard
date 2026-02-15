@@ -26,15 +26,7 @@
             50% { transform: translate(100%, 100%); }
         }
         
-        @keyframes pulseGlow {
-            0%, 100% { box-shadow: 0 0 2px rgba(200, 164, 92, 0.1); }
-            50% { box-shadow: 0 0 5px rgba(200, 164, 92, 0.2); }
-        }
-
-        @keyframes borderFlow {
-            0% { border-image: linear-gradient(0deg, var(--border-accent), var(--accent-primary)) 1; }
-            100% { border-image: linear-gradient(360deg, var(--border-accent), var(--accent-primary)) 1; }
-        }
+        /* Animations removed per Phase 6 cleanup */
 
         .gold-glow {
             filter: var(--accent-glow);
@@ -98,24 +90,22 @@
             transition: transform 0.2s, box-shadow 0.2s;
         }
         .attr-block:hover { transform: translateX(5px); border-color: var(--accent-primary); box-shadow: var(--glow); }
-        .attr-hex {
+        .attr-icon {
             width: 50px;
             height: 50px;
-            background: #222;
+            background: rgba(78, 205, 196, 0.1);
             border: 2px solid var(--accent-primary);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 20px;
             font-weight: bold;
-            color: var(--text-white);
+            color: var(--accent-primary);
             margin-right: 15px;
             position: relative;
-            box-shadow: 0 0 5px var(--accent-primary);
-            transform: rotate(45deg);
         }
-        .attr-hex span { transform: rotate(-45deg); }
         .attr-details { flex-grow: 1; }
         .attr-name { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; color: var(--accent-primary); margin-bottom: 5px; }
         .attr-progress-bar { height: 6px; background: #333; border-radius: 3px; overflow: hidden; border: 1px solid #555; }
@@ -159,7 +149,7 @@
             margin-top: 15px; 
             border: 3px solid #fff;
             position: relative;
-            animation: pulseGlow 4s ease-in-out infinite;
+            /* animation: pulseGlow 4s ease-in-out infinite; */
         }
         .level-badge::before {
             content: '';
@@ -170,7 +160,7 @@
             bottom: -5px;
             border: 2px solid var(--accent-primary);
             border-radius: 50%;
-            animation: borderFlow 4s linear infinite;
+            /* animation: borderFlow 4s linear infinite; */
         }
         .nav-tabs { 
             display: flex; 
@@ -429,7 +419,7 @@
             .quest-text {
                 font-size: 14px;
             }
-            .attr-hex {
+            .attr-icon {
                 width: 40px;
                 height: 40px;
                 font-size: 16px;
@@ -484,7 +474,7 @@
     <div class="right-panel panel">
         <div class="header-panel">
             <h1 id="char-name">Andrew</h1>
-            <div style="color:#888; margin-top:5px; font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size:18px;" id="char-class">Level 1</div>
+            <div style="color:#888; margin-top:5px; font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size:18px;" id="char-class">Phase 1</div>
             <div style="color:var(--accent-primary); margin-top:10px; font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size:16px;" id="current-date"></div>
             <div class="level-badge" id="level-badge">1</div>
         </div>
@@ -492,7 +482,7 @@
             <div class="nav-tab active" onclick="switchTab('daily')">Daily Habits</div>
             <div class="nav-tab" onclick="switchTab('main')">Daily Goals</div>
             <div class="nav-tab" onclick="switchTab('health')">Health</div>
-            <div class="nav-tab" onclick="switchTab('campaigns')">Campaigns</div>
+            <div class="nav-tab" onclick="switchTab('campaigns')">Projects</div>
             <div class="nav-tab" onclick="switchTab('wealth')">Finances</div>
         </div>
         <div id="daily" class="section active">
@@ -713,11 +703,11 @@
 <script>
     const audio = new Audio('audio.mp3'); audio.volume = 0.4;
     function playSound() { audio.currentTime = 0; audio.play().catch(e => console.log('Audio blocked')); }
-    const descriptions = { STR: "Power", DEX: "Agility", AUR: "Prosperity", INT: "Acuity", MND: "Wellness", CHA: "Confidence" };
+    const descriptions = { PWR: "Power", AGI: "Agility", VIT: "Vitality", KNW: "Knowledge", WEL: "Wellness", SOC: "Social" };
     
     function renderRadarChart(attrs) {
         const ctx = document.getElementById('attributeRadar').getContext('2d');
-        const labels = ['STR', 'DEX', 'AUR', 'INT', 'MND', 'CHA'];
+        const labels = ['PWR', 'AGI', 'VIT', 'KNW', 'WEL', 'SOC'];
         const values = labels.map(attr => {
             const score = attrs[attr]?.score || 10;
             return Math.max(0, (score - 10) * 10); // Convert to percentage (10 = 0%, 20 = 100%)
@@ -775,12 +765,12 @@
         container.innerHTML = '';
 
         const streakTypes = [
-            { id: 'calorieStreak', label: 'Calories', icon: 'C', attr: 'DEX' },
-            { id: 'proteinStreak', label: 'Protein', icon: 'P', attr: 'STR' },
-            { id: 'readingStreak', label: "Reading", icon: 'R', attr: 'INT' },
-            { id: 'digitalStreak', label: 'Screen Time', icon: 'D', attr: 'MND' },
-            { id: 'socialStreak', label: "Social", icon: 'S', attr: 'CHA' },
-            { id: 'workoutStreak', label: 'Workouts', icon: 'W', attr: 'STR', weekly: true }
+            { id: 'calorieStreak', label: 'Calories', icon: 'C', attr: 'AGI' },
+            { id: 'proteinStreak', label: 'Protein', icon: 'P', attr: 'PWR' },
+            { id: 'readingStreak', label: "Reading", icon: 'R', attr: 'KNW' },
+            { id: 'digitalStreak', label: 'Screen Time', icon: 'D', attr: 'WEL' },
+            { id: 'socialStreak', label: "Social", icon: 'S', attr: 'SOC' },
+            { id: 'workoutStreak', label: 'Workouts', icon: 'W', attr: 'PWR', weekly: true }
         ];
         
         // Add CSS for streak icons
@@ -885,12 +875,12 @@
 
         // Add habit rows
         const habits = [
-            { key: 'calories', label: 'Calories (DEX)' },
-            { key: 'protein', label: 'Protein (STR)' },
-            { key: 'reading', label: "Reading (INT)" },
-            { key: 'digital', label: 'Screen Time (MND)' },
-            { key: 'social', label: "Social (CHA)" },
-            { key: 'workout', label: 'Workouts (STR)', weekly: true }
+            { key: 'calories', label: 'Calories (AGI)' },
+            { key: 'protein', label: 'Protein (PWR)' },
+            { key: 'reading', label: "Reading (KNW)" },
+            { key: 'digital', label: 'Screen Time (WEL)' },
+            { key: 'social', label: "Social (SOC)" },
+            { key: 'workout', label: 'Workouts (PWR)', weekly: true }
         ];
         
         habits.forEach(habit => {
@@ -967,12 +957,12 @@
     function renderHeader(profile) { document.getElementById('char-class').textContent = profile.class; document.getElementById('level-badge').textContent = profile.level; }
     function renderAttributes(attrs) {
         const container = document.getElementById('attributes-list'); container.innerHTML = '';
-        ['STR', 'DEX', 'AUR', 'INT', 'MND', 'CHA'].forEach(key => {
+        ['PWR', 'AGI', 'VIT', 'KNW', 'WEL', 'SOC'].forEach(key => {
             const attr = attrs[key] || { score: 10, xp: 0, max: 100 };
             const mod = Math.floor((attr.score - 10) / 2);
             const percent = Math.min(100, (attr.xp / attr.max) * 100);
             const div = document.createElement('div'); div.className = 'attr-block';
-            div.innerHTML = `<div class="attr-hex"><span>${attr.score}</span></div><div class="attr-details"><div class="attr-name">${key} (${mod >= 0 ? '+' : ''}${mod})</div><div class="attr-progress-bar"><div class="attr-progress-fill" style="width:${percent}%"></div></div></div><div class="attr-tooltip">${descriptions[key]}</div>`;
+            div.innerHTML = `<div class="attr-icon">${attr.score}</div><div class="attr-details"><div class="attr-name">${key}</div><div class="attr-progress-bar"><div class="attr-progress-fill" style="width:${percent}%"></div></div></div><div class="attr-tooltip">${descriptions[key]}</div>`;
             container.appendChild(div);
         });
         renderRadarChart(attrs);
