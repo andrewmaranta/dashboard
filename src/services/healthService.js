@@ -22,12 +22,13 @@ async function getDailyStats(requestedDate) {
     const dateToFetch = requestedDate || today;
     const database = await getDb();
     let rows = await database.all('SELECT * FROM nutrition_log WHERE date = ?', [dateToFetch]);
-    let stats = { calories: 0, protein: 0, isToday: (dateToFetch === today), date: dateToFetch };
+    let stats = { calories: 0, protein: 0, fiber: 0, isToday: (dateToFetch === today), date: dateToFetch };
     
     if (rows.length > 0) {
         rows.forEach(r => {
             stats.calories += r.calories || 0;
             stats.protein += r.protein || 0;
+            stats.fiber += r.fiber || 0;
         });
     } else if (!requestedDate) {
         const latest = await database.get('SELECT date FROM nutrition_log WHERE date < ? ORDER BY date DESC LIMIT 1', [today]);
@@ -36,6 +37,7 @@ async function getDailyStats(requestedDate) {
             rows.forEach(r => {
                 stats.calories += r.calories || 0;
                 stats.protein += r.protein || 0;
+                stats.fiber += r.fiber || 0;
             });
             stats.date = latest.date;
         }

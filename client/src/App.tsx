@@ -1,8 +1,8 @@
-import HeroDemo from './HeroDemo';
+import { DashboardLayout } from './components/dashboard/DashboardLayout';
 
 function App() {
   return (
-    <HeroDemo />
+    <DashboardLayout />
   );
 }
 

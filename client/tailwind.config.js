@@ -20,6 +20,21 @@ export default {
     },
     extend: {
       colors: {
+        cozy: {
+          bg: "var(--cozy-bg)",
+          "bg-alt": "var(--cozy-bg-alt)",
+          panel: "var(--cozy-panel)",
+          text: "var(--cozy-text)",
+          "text-dark": "var(--cozy-text-dark)",
+          "text-muted": "var(--cozy-text-muted)",
+          "text-dim": "var(--cozy-text-dim)",
+          accent: "var(--cozy-accent)",
+          "accent-dark": "var(--cozy-accent-dark)",
+          "accent-soft": "var(--cozy-accent-soft)",
+          warm: "var(--cozy-warm)",
+          gold: "var(--cozy-gold)",
+          border: "var(--cozy-border)",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

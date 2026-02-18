@@ -147,4 +147,86 @@ cd health_dashboard && nohup node server.js > output.log 2>&1 &
 
 ---
 
+## Emoji Rendering — Monochrome Style
+
+**Font:** Noto Emoji (Google Fonts) — `family=Noto+Emoji:wght@300..700`
+
+**CSS Class:**
+```css
+.noto-emoji {
+  font-family: 'Noto Emoji', sans-serif;
+  font-weight: 400;
+  font-variant-emoji: text;
+  -webkit-text-fill-color: currentColor;
+  color: currentColor;
+}
+```
+
+**Helper Function:**
+```typescript
+const M = (emoji: string) => `${emoji}\uFE0E`;
+```
+
+**⚠️ CRITICAL: Use Base Text Variants**
+
+The `\uFE0E` variation selector only works reliably on **base Unicode characters** (without the emoji presentation). Many emojis don't have monochrome variants.
+
+| ❌ Color (broken) | ✅ Monochrome (works) |
+|-------------------|-----------------------|
+| 🏔️ | ⛰ |
+| ⚔️ | ⚔ |
+| ▶️ | ▶ |
+| ⏸️ | ⏸ |
+| ⚙️ | ⚙ |
+| ⚖️ | ⚖ |
+| 🛡️ | 🛡 |
+
+**Rule:** If an emoji shows color, try the base character without the emoji suffix (remove the `️` U+FE0F).
+
+**Fallback:** Add `filter: grayscale(100%)` if needed:
+```css
+.noto-emoji {
+  filter: grayscale(100%);
+}
+```
+
+---
+
+## Production Build — Static File Serving
+
+**⚠️ DO NOT use `npm run dev` on Raspberry Pi**
+
+The Vite dev server crashes repeatedly due to memory leaks in HMR (Hot Module Replacement). Use production build instead.
+
+### Build & Serve
+
+```bash
+cd health_dashboard/client
+
+# Build for production
+npm run build
+
+# Serve static files (stable, low memory)
+npx http-server dist -p 5173 --host 0.0.0.0
+```
+
+### URLs After Build
+- `http://100.75.38.93:5173` — Tailscale
+- `http://192.168.1.206:5173` — Local network  
+- `http://localhost:5173` — Localhost
+
+### Why Dev Server Fails
+- HMR keeps files in memory for fast reloading
+- Each edit adds to memory footprint
+- After ~20-30 edits, Node.js hits heap limit → SIGKILL
+- **Pi has 8GB RAM but Node default heap is ~2GB**
+
+### Static Server Benefits
+- ✅ No memory leaks
+- ✅ Stays up indefinitely
+- ✅ 613KB total vs dev server overhead
+- ✅ Same performance, zero crashes
+
+---
+
 Last updated: 2026-02-18

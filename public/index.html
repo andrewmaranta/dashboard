@@ -9,60 +9,97 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="container">
-    <div class="left-panel panel">
-        <h2 style="text-align:center; margin-bottom:20px; border-bottom:1px solid rgba(122, 158, 126, 0.2); padding-bottom:10px; font-family:'Fraunces',serif;">Attributes</h2>
-        <div id="attributes-list"></div>
-        <div class="chart-container" style="margin-top:20px; height:300px;">
-            <canvas id="attributeRadar"></canvas>
-        </div>
-        <div style="margin-top:20px; border-top:1px solid rgba(122, 158, 126, 0.2); padding-top:15px;">
-            <h3 style="font-size:16px; text-align:center; margin-bottom:15px;">Current Streaks</h3>
-            <div id="streaks-container">
-                <!-- Streaks will be inserted here -->
-            </div>
-            <div style="text-align: center; margin-top: 15px;">
-                <button onclick="completeDashboardCheckIn()" class="timer-btn">Complete Daily Review</button>
-            </div>
-        </div>
-    </div>
-    <div class="right-panel panel">
+<div class="container" style="display: block; max-width: 1200px;">
+    <div class="panel">
         <div class="header-panel">
             <h1 id="char-name">Andrew</h1>
             <div style="color:#888; margin-top:5px; font-family:'Nunito', sans-serif; font-size:18px;" id="char-class">Phase 1</div>
             <div style="color:var(--accent-primary); margin-top:10px; font-family:'Nunito', sans-serif; font-size:16px;" id="current-date"></div>
             <div class="level-badge" id="level-badge">1</div>
         </div>
-        <div class="nav-tabs">
+        <div class="nav-tabs" style="justify-content: center; flex-wrap: wrap;">
             <div class="nav-tab active" onclick="switchTab('daily')">Daily Habits</div>
-            <div class="nav-tab" onclick="switchTab('main')">Daily Goals</div>
+            <div class="nav-tab" onclick="switchTab('main')">Task List</div>
             <div class="nav-tab" onclick="switchTab('focus')">Focus</div>
             <div class="nav-tab" onclick="switchTab('health')">Health</div>
             <div class="nav-tab" onclick="switchTab('campaigns')">Projects</div>
             <div class="nav-tab" onclick="switchTab('wealth')">Finances</div>
+            <div class="nav-tab" onclick="switchTab('attributes')">Attributes</div>
         </div>
+        
+        <div id="attributes" class="section">
+            <h2 style="text-align:center; margin-bottom:20px; border-bottom:1px solid rgba(122, 158, 126, 0.2); padding-bottom:10px; font-family:'Fraunces',serif;">Attributes</h2>
+            <div id="attributes-list"></div>
+            <div class="chart-container" style="margin-top:20px; height:300px;">
+                <canvas id="attributeRadar"></canvas>
+            </div>
+        </div>
+
         <div id="daily" class="section active">
             <div class="habit-heatmap panel" style="margin-bottom: 20px;">
-                <h3 style="margin-bottom: 15px;">Daily Habits</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                    <h3 style="margin:0;">Daily Habits</h3>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <button class="timer-btn" style="padding: 5px 12px;" onclick="changeWeek(-1)">❮</button>
+                        <input type="date" id="heatmap-date-picker" class="timer-btn" style="background: rgba(0,0,0,0.2); border: 1px solid var(--accent-primary); color: white; padding: 5px 10px;" onchange="loadHeatmap(this.value)">
+                        <button class="timer-btn" style="padding: 5px 12px;" onclick="changeWeek(1)">❯</button>
+                    </div>
+                </div>
                 <div id="heatmap-grid" class="heatmap-grid"></div>
                 <div class="heatmap-legend" style="margin-top: 10px;">
-                    <div class="legend-item"><div class="legend-box" style="background: rgba(255,255,255,0.05)"></div>Missed (<50%)</div>
-                    <div class="legend-item"><div class="legend-box" style="background: var(--accent-warm); opacity: 0.7;"></div>Partial (50-99%)</div>
-                    <div class="legend-item"><div class="legend-box" style="background: var(--accent-primary)"></div>Complete (100%)</div>
+                    <div class="legend-item"><div class="legend-box" style="background: rgba(255,255,255,0.05)"></div>Missed</div>
+                    <div class="legend-item"><div class="legend-box" style="background: #555;"></div>Partial</div>
+                    <div class="legend-item"><div class="legend-box" style="background: var(--accent-primary)"></div>Streak 1</div>
+                    <div class="legend-item"><div class="legend-box" style="background: #e9c46a;"></div>Streak 2</div>
+                    <div class="legend-item"><div class="legend-box" style="background: #f4a261;"></div>Streak 3</div>
+                    <div class="legend-item"><div class="legend-box" style="background: #e76f51;"></div>Streak 4+</div>
                 </div>
             </div>
-            <h3 style="margin-bottom: 15px; margin-top: 30px;">Core Habits</h3>
-            <ul class="quest-list" id="core-habits-list" style="margin-bottom: 30px;"></ul>
-            
-            <h3 style="margin-bottom: 15px;">Daily Quests</h3>
-            <ul class="quest-list" id="daily-list"></ul>
+
+            <div class="panel" style="margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px;">🔥 Current Streaks</h3>
+                <div id="streaks-container">
+                    <!-- Streaks will be inserted here -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                    <h3 style="margin:0;" id="habits-header">Core Habits</h3>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <button class="timer-btn" style="padding: 5px 12px;" onclick="changeDay('habit', -1)">❮</button>
+                        <input type="date" id="habit-date-picker" class="timer-btn" style="background: rgba(0,0,0,0.2); border: 1px solid var(--accent-primary); color: white; padding: 5px 10px;" onchange="loadHabitsForDate(this.value)">
+                        <button class="timer-btn" style="padding: 5px 12px;" onclick="changeDay('habit', 1)">❯</button>
+                    </div>
+                </div>
+                <ul class="quest-list" id="core-habits-list"></ul>
+            </div>
         </div>
-        <div id="main" class="section"><ul class="goal-list" id="main-list"></ul></div>
-        
-        <!-- Focus Tab Content -->
+            <div id="main" class="section">
+                <div class="panel">
+                    <h3 style="margin-bottom: 20px;">📋 Task List</h3>
+                    <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                        <input type="text" id="new-task-input" class="timer-btn" style="flex:1; background: rgba(0,0,0,0.2); border: 1px solid var(--accent-primary); color: white; border-radius: 12px; text-align: left; padding: 10px 20px;" placeholder="Add a new task...">
+                        <select id="new-task-attr" class="timer-btn" style="width: auto;">
+                            <option value="">None</option>
+                            <option value="PWR">PWR</option>
+                            <option value="AGI">AGI</option>
+                            <option value="VIT">VIT</option>
+                            <option value="KNW">KNW</option>
+                            <option value="WEL">WEL</option>
+                            <option value="SOC">SOC</option>
+                        </select>
+                        <button class="timer-btn" onclick="addTask()">Add</button>
+                    </div>
+                    <ul class="goal-list" id="task-list"></ul>
+                </div>
+            </div>
+            
+            <div id="notification-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;"></div>
+                <!-- Focus Tab Content -->
         <div id="focus" class="section">
             <div class="pomodoro-ritual panel" style="padding: 40px; text-align: center;">
-                <h2 style="margin-bottom: 30px;">Focus Ritual</h2>
+                <h2 style="margin-bottom: 30px;">Session Timer</h2>
                 <div class="timer-container" style="width: 220px; height: 220px; margin: 0 auto;">
                     <svg width="220" height="220" viewBox="0 0 220 220">
                         <circle class="progress-ring-bg" cx="110" cy="110" r="100" stroke-width="8" fill="none" />
@@ -79,13 +116,13 @@
                 </div>
 
                 <div class="break-bank" style="margin-top: 40px;">
-                    <h3>Vault of Rest</h3>
+                    <h3>Break Bank</h3>
                     <div id="pomo-tokens" style="min-height: 40px; margin: 15px 0;"></div>
-                    <button id="pomo-take-break" class="timer-btn" disabled>Claim Reward</button>
+                    <button id="pomo-take-break" class="timer-btn" disabled>Start Break</button>
                 </div>
 
                 <div class="history-panel" style="margin-top: 40px; text-align: left;">
-                    <h3>Chronicles</h3>
+                    <h3>Session History</h3>
                     <div id="pomo-history" class="history-list"></div>
                 </div>
             </div>
@@ -93,15 +130,20 @@
 
         <div id="health" class="section">
             <div class="chart-container" style="height:300px;"><canvas id="healthChart"></canvas></div>
-            <div style="margin-top:20px; display:flex; justify-content:space-around; font-size:18px; margin-bottom: 20px;">
-                <div>Weight: <span id="weight" class="editable" onclick="editStat('weight')">-</span> lbs</div>
-                <div>Body Fat: <span id="bf" class="editable" onclick="editStat('bf')">-</span>%</div>
+            <div style="margin-top:20px; display:flex; justify-content:space-around; align-items:center; font-size:18px; margin-bottom: 20px;">
+                <div>Weight: <span id="weight">-</span> lbs</div>
+                <div>Body Fat: <span id="bf">-</span>%</div>
+                <button class="timer-btn" onclick="openHealthModal()">Edit Stats</button>
             </div>
 
             <div class="panel" style="margin-bottom: 20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
                     <h3 style="margin:0;" id="meals-header">🍽️ Meals</h3>
-                    <input type="date" id="meal-date-picker" class="timer-btn" style="background: rgba(0,0,0,0.2); border: 1px solid var(--accent-primary); color: white; padding: 5px 10px;" onchange="loadMealsForDate(this.value)">
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <button class="timer-btn" style="padding: 5px 12px;" onclick="changeDay('meal', -1)">❮</button>
+                        <input type="date" id="meal-date-picker" class="timer-btn" style="background: rgba(0,0,0,0.2); border: 1px solid var(--accent-primary); color: white; padding: 5px 10px;" onchange="loadMealsForDate(this.value)">
+                        <button class="timer-btn" style="padding: 5px 12px;" onclick="changeDay('meal', 1)">❯</button>
+                    </div>
                 </div>
                 <div id="meals-list" style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Meals will be inserted here -->
@@ -109,37 +151,6 @@
                 <div id="meals-summary" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(122, 158, 126, 0.2); font-weight: bold; display: flex; justify-content: space-around;">
                     <div>Total Cal: <span id="meal-total-cal">0</span></div>
                     <div>Total Protein: <span id="meal-total-protein">0</span>g</div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-                    <h3 style="margin:0;" id="daily-log-header">📜 Daily Log</h3>
-                    <button class="timer-btn" id="edit-log-btn" onclick="toggleEditLog()">Edit Log</button>
-                </div>
-                <div class="stats-grid" id="stats-display">
-                    <div class="stat-input-group">
-                        <label>Calories</label>
-                        <span id="display-calories" class="finance-value">-</span>
-                    </div>
-                    <div class="stat-input-group">
-                        <label>Protein (g)</label>
-                        <span id="display-protein" class="finance-value">-</span>
-                    </div>
-                </div>
-                <div class="stats-grid" id="stats-edit" style="display:none;">
-                    <div class="stat-input-group">
-                        <label>Calories</label>
-                        <input type="number" id="input-calories">
-                    </div>
-                    <div class="stat-input-group">
-                        <label>Protein (g)</label>
-                        <input type="number" id="input-protein">
-                    </div>
-                    <div style="grid-column: span 2; display:flex; gap:10px;">
-                        <button class="save-btn" style="flex:1;" onclick="saveDailyStats()">Save Changes</button>
-                        <button class="save-btn" style="flex:1; background:transparent; border:1px solid var(--accent-warm); color:var(--accent-warm);" onclick="toggleEditLog()">Cancel</button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -236,7 +247,7 @@
     </style>
     <div class="modal" id="pomo-settings-modal">
         <div class="modal-content">
-            <h3>⚙️ Focus Settings</h3>
+            <h3>⚙️ Timer Settings</h3>
             <div class="setting-group">
                 <label>Work (min):</label>
                 <input type="number" id="pomo-work-input" min="1" max="120">
@@ -246,8 +257,29 @@
                 <input type="number" id="pomo-break-input" min="1" max="60">
             </div>
             <div style="margin-top: 30px;">
-                <button id="pomo-save-settings" class="timer-btn">Save Ritual</button>
+                <button id="pomo-save-settings" class="timer-btn">Save Settings</button>
                 <button id="pomo-close-settings" class="timer-btn" style="background:transparent; border:1px solid var(--text-secondary);">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Edit Modal -->
+    <div class="modal" id="health-modal">
+        <div class="modal-content">
+            <h3>⚖️ Update Health Stats</h3>
+            <div class="stats-grid" style="text-align: left; margin-bottom: 20px;">
+                <div class="stat-input-group">
+                    <label>Weight (lbs)</label>
+                    <input type="number" step="0.1" id="h-weight">
+                </div>
+                <div class="stat-input-group">
+                    <label>Body Fat (%)</label>
+                    <input type="number" step="0.1" id="h-bf">
+                </div>
+            </div>
+            <div style="margin-top: 30px; display:flex; gap:10px;">
+                <button class="save-btn" style="flex:1;" onclick="saveHealthStats()">Update Stats</button>
+                <button class="save-btn" style="flex:1; background:transparent; border:1px solid var(--text-secondary);" onclick="closeHealthModal()">Cancel</button>
             </div>
         </div>
     </div>

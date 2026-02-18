@@ -1,1 +1,10 @@
 Life RPG Dashboard running on http://localhost:3000
+Dashboard client connected
+Route received: { text: 'Fresh test', attribute: 'SOC' }
+DEBUG: Adding task text="Fresh test", attr="SOC"
+Dashboard client disconnected
+Dashboard client connected
+Route received: { text: 'test', attribute: 'PWR' }
+DEBUG: Adding task text="test", attr="PWR"
+Dashboard client disconnected
+Dashboard client connected

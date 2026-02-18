@@ -5,13 +5,48 @@ function playSound() { audio.currentTime = 0; audio.play().catch(e => console.lo
 // Socket.io Real-time Updates
 socket.on('habitUpdated', (data) => {
     console.log('Habit updated remotely:', data);
-    renderHabits(data.today);
-    renderStreaks(data.streaks);
+    const selectedDate = document.getElementById('habit-date-picker').value;
+    if (data.date === selectedDate) {
+        renderHabits(data.today);
+    }
+    loadHeatmap();
 });
+
+async function loadHeatmap(date) {
+    try {
+        const localNow = new Date();
+        const todayStr = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        const targetDate = date || todayStr;
+        
+        const picker = document.getElementById('heatmap-date-picker');
+        if (picker) picker.value = targetDate;
+
+        const res = await fetch(`/api/heatmap?date=${targetDate}`);
+        const data = await res.json();
+        renderHeatmap(data);
+    } catch (e) { console.error('Heatmap failed:', e); }
+}
+
+function changeWeek(delta) {
+    const picker = document.getElementById('heatmap-date-picker');
+    if (!picker) return;
+    
+    const currentDate = new Date(picker.value + 'T12:00:00');
+    currentDate.setDate(currentDate.getDate() + (delta * 7));
+    const newDateStr = currentDate.toISOString().split('T')[0];
+    
+    picker.value = newDateStr;
+    loadHeatmap(newDateStr);
+}
 
 socket.on('healthUpdated', (stats) => {
     console.log('Health updated remotely:', stats);
     renderDailyStats(stats);
+});
+
+socket.on('healthStatsUpdated', (data) => {
+    console.log('Health stats updated remotely:', data);
+    renderHealth(data);
 });
 
 socket.on('financeUpdated', (data) => {
@@ -24,9 +59,14 @@ socket.on('questUpdated', () => {
     loadData();
 });
 
+socket.on('tasksUpdated', (tasks) => {
+    console.log('Tasks updated remotely:', tasks);
+    renderTasks(tasks);
+});
+
 const descriptions = { PWR: "Power", AGI: "Agility", VIT: "Vitality", KNW: "Knowledge", WEL: "Wellness", SOC: "Social" };
 
-// Pomodoro Ritual State
+// Pomodoro Timer State
 let pomoState = {
     workTime: parseInt(localStorage.getItem('pomoWorkTime')) || 2700,
     breakTime: parseInt(localStorage.getItem('pomoBreakTime')) || 900,
@@ -130,15 +170,15 @@ function renderHeatmap(data) {
     if (!grid) return;
     grid.innerHTML = '';
     
-    // Only show last 7 days for the weekly heatmap
-    const weekDays = data.slice(-7);
+    // Data is already Sun-Sat from server
+    const weekDays = data;
     
     const dayLabels = document.createElement('div');
     dayLabels.className = 'heatmap-day-labels';
     dayLabels.appendChild(document.createElement('div'));
     const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
     
-    weekDays.forEach((dayData) => {
+    weekDays.forEach((dayData, index) => {
         const date = new Date(dayData.date + 'T12:00:00');
         const label = document.createElement('div');
         label.innerHTML = `${dayNames[date.getDay()]}<br><small>${date.getDate()}</small>`;
@@ -149,8 +189,11 @@ function renderHeatmap(data) {
     const heatmapRows = [
         { key: 'workout', label: 'Workout' },
         { key: 'reading', label: 'Reading' },
-        { key: 'nutrition', label: 'Nutrition' },
-        { key: 'logging', label: 'Logging' }
+        { key: 'digitalSunset', label: 'Sunset' },
+        { key: 'social', label: 'Social' },
+        { key: 'medication', label: 'Med' },
+        { key: 'calories', label: 'Cals' },
+        { key: 'protein', label: 'Prot' }
     ];
 
     heatmapRows.forEach(habit => {
@@ -164,8 +207,33 @@ function renderHeatmap(data) {
         weekDays.forEach(day => {
             const cell = document.createElement('div');
             cell.className = 'heatmap-cell';
+            
+            // Get streak from main value or streaks object if available
+            // Note: The main value IS the streak count if > 1, or 1 if just today
             const value = day[habit.key];
-            if (value >= 100) cell.classList.add('complete');
+            let streakCount = 0;
+            
+            if (value >= 1) {
+                streakCount = Math.floor(value);
+                const streakLevel = Math.min(4, streakCount);
+                cell.classList.add(`streak-${streakLevel}`);
+            } else if (value === 0.5) {
+                cell.classList.add('partial');
+            }
+
+            // Tooltip
+            if (streakCount > 0) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'heatmap-tooltip';
+                tooltip.textContent = `🔥 ${streakCount} day streak`;
+                cell.appendChild(tooltip);
+            } else if (value === 0.5) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'heatmap-tooltip';
+                tooltip.textContent = `Partial`;
+                cell.appendChild(tooltip);
+            }
+
             row.appendChild(cell);
         });
         grid.appendChild(row);
@@ -189,26 +257,37 @@ async function loadData() {
     try {
         const qRes = await fetch('/api/quests'); const qData = await qRes.json();
         renderAttributes(qData.attributes); renderHeader(qData.profile);
-        renderList('daily-list', qData.daily); renderList('main-list', qData.main);
+        
+        const tasksRes = await fetch('/api/tasks'); const tasks = await tasksRes.json();
+        renderTasks(tasks);
         
         const hRes = await fetch('/api/health'); const hData = await hRes.json(); renderHealth(hData);
         const statsRes = await fetch('/api/daily-stats'); const stats = await statsRes.json(); 
         renderDailyStats(stats);
         renderStreaks(stats); 
 
-        // Load yesterday's meals by default
-        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        // Get local YYYY-MM-DD
+        const localNow = new Date();
+        const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+
+        // Load today's habits by default
+        const habitDatePicker = document.getElementById('habit-date-picker');
+        if (habitDatePicker) {
+            habitDatePicker.value = today;
+            loadHabitsForDate(today);
+        }
+
+        // Load today's meals by default (fix: showing today instead of yesterday)
         const datePicker = document.getElementById('meal-date-picker');
         if (datePicker) {
-            datePicker.value = yesterday;
-            loadMealsForDate(yesterday);
+            datePicker.value = today;
+            loadMealsForDate(today);
         }
         
         const fRes = await fetch('/api/finance'); const fData = await fRes.json(); renderFinance(fData);
         const cRes = await fetch('/api/goals'); const cData = await cRes.json(); renderCampaigns(cData);
         
-        const heatmapRes = await fetch('/api/heatmap'); const heatmapData = await heatmapRes.json();
-        renderHeatmap(heatmapData);
+        loadHeatmap();
     } catch (e) { console.error('LoadData failed:', e); }
 }
 
@@ -216,22 +295,14 @@ let currentStats = { isToday: false };
 
 function renderDailyStats(stats) {
     currentStats = stats;
-    document.getElementById('display-calories').textContent = stats.calories || 0;
-    document.getElementById('display-protein').textContent = stats.protein || 0;
-    
-    const label = document.getElementById('daily-log-header');
-    if (stats.isToday) {
-        document.getElementById('input-calories').value = stats.calories;
-        document.getElementById('input-protein').value = stats.protein;
-        document.getElementById('edit-log-btn').textContent = 'Edit Log';
-        if (label) label.innerHTML = `📜 Daily Log`;
-    } else {
-        document.getElementById('edit-log-btn').textContent = 'Log Today';
-        if (label) label.innerHTML = `📜 Daily Log <small style="color:var(--accent-warm); font-size:12px;">(Latest: ${stats.date})</small>`;
-    }
-    
-    if (stats.habits) renderHabits(stats.habits);
+    // Update any daily stats display elements if they exist
+    const calEl = document.getElementById('daily-calories');
+    const protEl = document.getElementById('daily-protein');
+    if (calEl) calEl.textContent = stats.calories || 0;
+    if (protEl) protEl.textContent = stats.protein || 0;
 }
+
+function renderHeader(profile) { document.getElementById('char-class').textContent = profile.class; document.getElementById('level-badge').textContent = profile.level; }
 
 async function loadMealsForDate(date) {
     try {
@@ -252,8 +323,10 @@ function renderMeals(meals, date) {
     if (!list) return;
     list.innerHTML = '';
     
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const localNow = new Date();
+    const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    const yesterdayDate = new Date(localNow.getTime() - 86400000);
+    const yesterday = new Date(yesterdayDate.getTime() - (yesterdayDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     
     let dateLabel = '';
     if (date === today) dateLabel = '(Today)';
@@ -287,68 +360,160 @@ function renderMeals(meals, date) {
         });
     }
     
-    totalCalEl.textContent = totalCal;
-    totalProteinEl.textContent = totalProtein;
+    if (totalCalEl) totalCalEl.textContent = totalCal;
+    if (totalProteinEl) totalProteinEl.textContent = totalProtein;
 }
 
-function toggleEditLog() {
-    const display = document.getElementById('stats-display');
-    const edit = document.getElementById('stats-edit');
-    const btn = document.getElementById('edit-log-btn');
-    if (display.style.display === 'none') {
-        display.style.display = 'grid'; 
-        edit.style.display = 'none'; 
-        btn.textContent = currentStats.isToday ? 'Edit Log' : 'Log Today';
-    } else {
-        display.style.display = 'none'; 
-        edit.style.display = 'grid'; 
-        btn.textContent = 'Cancel';
+async function loadHabitsForDate(date) {
+    try {
+        const res = await fetch(`/api/habits/today?date=${date}`);
+        const habits = await res.json();
+        renderHabits(habits);
+    } catch (e) {
+        console.error('Failed to load habits:', e);
     }
 }
 
 function renderHabits(habits) {
     const list = document.getElementById('core-habits-list');
+    const header = document.getElementById('habits-header');
     if (!list) return;
     list.innerHTML = '';
     
-    // Show tracking date in header
-    const habitHeader = document.querySelector('#daily h3:nth-of-type(2)');
-    if (habitHeader) {
-        habitHeader.innerHTML = `Core Habits <small style="color:var(--accent-warm); font-size:12px;">(${habits._isToday ? 'Today' : 'Latest: ' + habits._date})</small>`;
-    }
+    const localNow = new Date();
+    const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    const yesterdayDate = new Date(localNow.getTime() - 86400000);
+    const yesterday = new Date(yesterdayDate.getTime() - (yesterdayDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    
+    let dateLabel = '';
+    if (habits._date === today) dateLabel = '(Today)';
+    else if (habits._date === yesterday) dateLabel = '(Yesterday)';
+    else dateLabel = `(${habits._date})`;
+    
+    if (header) header.innerHTML = `Core Habits <small style="color:var(--accent-warm); font-size:12px;">${dateLabel}</small>`;
 
     const names = {
-        workout: '⚔️ Training Session (Workout)',
-        read20Min: '📚 The Reader\'s Vow (Read 20m)',
-        digitalSunset: '🌅 Digital Sunset (Screens off 10pm)',
-        socialInteraction: '🤝 Stranger\'s Greeting (Social Interaction)',
-        medication: '💊 The Vital Dose (Medication)'
+        workout: 'Training Session (Workout)',
+        read20Min: 'Reading (20m)',
+        digitalSunset: 'Digital Sunset (Off 10pm)',
+        socialInteraction: 'Social Interaction',
+        medication: 'Medication'
     };
     Object.keys(names).forEach(key => {
         const completed = habits[key] === true;
         const li = document.createElement('li'); li.className = 'goal-item';
-        li.innerHTML = `<div class="checkbox-custom ${completed ? 'checked' : ''}" onclick="toggleHabit('${key}')"></div><div class="goal-text ${completed ? 'completed' : ''}">${names[key]}</div>`;
+        li.innerHTML = `
+            <div class="checkbox-custom ${completed ? 'checked' : ''}" onclick="toggleHabit('${key}', '${habits._date}')"></div>
+            <div class="goal-text ${completed ? 'completed' : ''}">${names[key]}</div>
+        `;
         list.appendChild(li);
     });
 }
 
-async function toggleHabit(key) {
+async function toggleHabit(key, date) {
     playSound();
-    await fetch('/api/habits/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ habit: key }) });
+    await fetch('/api/habits/toggle', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ habit: key, date: date }) 
+    });
+    loadHabitsForDate(date);
+    loadHeatmap();
+}
+
+function renderTasks(tasks) {
+    const list = document.getElementById('task-list');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'goal-item';
+        let attrBadge = '';
+        if (task.attribute) {
+            attrBadge = `<span class="goal-points" style="margin-right: 10px;">${task.attribute}</span>`;
+        }
+        li.innerHTML = `
+            <div class="checkbox-custom ${task.completed ? 'checked' : ''}" onclick="toggleTaskItem(${task.id})"></div>
+            ${attrBadge}
+            <div class="goal-text ${task.completed ? 'completed' : ''}">${task.text}</div>
+            <button class="timer-btn" style="background:transparent; color:var(--accent-warm); box-shadow:none; padding: 5px;" onclick="deleteTask(${task.id})">✕</button>
+        `;
+        list.appendChild(li);
+    });
+}
+
+async function addTask() {
+    const input = document.getElementById('new-task-input');
+    const attrSelect = document.getElementById('new-task-attr');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, attribute: attrSelect.value })
+    });
+    input.value = '';
+    playSound();
+}
+
+// ... existing toggleTaskItem ...
+
+function showNotification(message) {
+    const container = document.getElementById('notification-container');
+    const div = document.createElement('div');
+    div.style.background = 'var(--panel-bg)';
+    div.style.border = '1px solid var(--accent-primary)';
+    div.style.color = 'var(--text-primary)';
+    div.style.padding = '15px 25px';
+    div.style.marginBottom = '10px';
+    div.style.borderRadius = '12px';
+    div.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+    div.style.animation = 'fadeIn 0.3s ease-out';
+    div.innerHTML = message;
+    
+    container.appendChild(div);
+    setTimeout(() => {
+        div.style.opacity = '0';
+        setTimeout(() => div.remove(), 300);
+    }, 3000);
+}
+
+socket.on('xpGained', (data) => {
+    playSound();
+    showNotification(`✨ <strong>+${data.amount} ${data.attribute} XP</strong>`);
+    // Reload attributes to show progress
     loadData();
+});
+
+async function toggleTaskItem(id) {
+    playSound();
+    await fetch('/api/tasks/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+    });
 }
 
-async function saveDailyStats() {
-    const stats = {
-        calories: parseInt(document.getElementById('input-calories').value) || 0,
-        protein: parseInt(document.getElementById('input-protein').value) || 0
-    };
-    await fetch('/api/daily-stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(stats) });
-    playSound(); loadData();
-    if (document.getElementById('stats-edit').style.display === 'grid') toggleEditLog();
+async function deleteTask(id) {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
 }
 
-function renderHeader(profile) { document.getElementById('char-class').textContent = profile.class; document.getElementById('level-badge').textContent = profile.level; }
+function changeDay(type, delta) {
+    const pickerId = type === 'habit' ? 'habit-date-picker' : 'meal-date-picker';
+    const picker = document.getElementById(pickerId);
+    if (!picker) return;
+    
+    const currentDate = new Date(picker.value + 'T12:00:00');
+    currentDate.setDate(currentDate.getDate() + delta);
+    const newDateStr = currentDate.toISOString().split('T')[0];
+    
+    picker.value = newDateStr;
+    if (type === 'habit') loadHabitsForDate(newDateStr);
+    else loadMealsForDate(newDateStr);
+}
 function renderAttributes(attrs) {
     const container = document.getElementById('attributes-list'); 
     if (!container) return;
@@ -378,12 +543,39 @@ function renderHealth(data) {
     const last = data[data.length - 1]; 
     document.getElementById('weight').textContent = last.weight; 
     document.getElementById('bf').textContent = last.bodyFat;
+    
+    // Fill modal values with latest
+    document.getElementById('h-weight').value = last.weight;
+    document.getElementById('h-bf').value = last.bodyFat;
+
     const container = document.querySelector('#health .chart-container');
     if (container) {
         container.innerHTML = '<canvas id="healthChart"></canvas>';
         const ctx = document.getElementById('healthChart').getContext('2d');
         new Chart(ctx, { type: 'line', data: { labels: data.map(d => d.date), datasets: [{ label: 'Weight', data: data.map(d => d.weight), borderColor: '#d4a373', backgroundColor: 'rgba(212, 163, 115, 0.1)', tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
     }
+}
+
+function openHealthModal() {
+    document.getElementById('health-modal').classList.add('active');
+}
+function closeHealthModal() { document.getElementById('health-modal').classList.remove('active'); }
+async function saveHealthStats() {
+    const weight = parseFloat(document.getElementById('h-weight').value);
+    const bodyFat = parseFloat(document.getElementById('h-bf').value);
+    if (isNaN(weight) || isNaN(bodyFat)) return;
+
+    await fetch('/api/health/stats', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ weight, bodyFat }) 
+    });
+    playSound();
+    // reload data to refresh graph and stats
+    const hRes = await fetch('/api/health'); 
+    const hData = await hRes.json(); 
+    renderHealth(hData);
+    closeHealthModal();
 }
 
 let currentFinanceData = {};
@@ -437,7 +629,7 @@ async function toggleGoal(text) { playSound(); await fetch('/api/quests/toggle',
 
 // Focus Logic (Pomodoro)
 function initPomodoro() {
-    pomoState.timeLeft = pomoState.workTime; updatePomoDisplay(); updatePomoVault(); loadPomoHistory();
+    pomoState.timeLeft = pomoState.workTime; updatePomoDisplay(); updatePomoBank(); loadPomoHistory();
     document.getElementById('pomo-start').onclick = startPomo;
     document.getElementById('pomo-pause').onclick = pausePomo;
     document.getElementById('pomo-reset').onclick = resetPomo;
@@ -460,20 +652,70 @@ function updatePomoDisplay() {
     const ring = document.getElementById('pomodoro-ring');
     if (ring) ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - pomoState.timeLeft / (pomoState.currentMode === 'work' ? pomoState.workTime : pomoState.breakTime));
 }
-function updatePomoVault() {
-    const v = document.getElementById('pomo-tokens'); v.innerHTML = '🍷'.repeat(pomoState.breaksEarned) || 'The vault is empty.';
+function updatePomoBank() {
+    const v = document.getElementById('pomo-tokens'); v.innerHTML = '☕'.repeat(pomoState.breaksEarned) || 'No breaks earned yet.';
     document.getElementById('pomo-take-break').disabled = pomoState.breaksEarned === 0 || pomoState.currentMode === 'break';
+    localStorage.setItem('pomoBreaksEarned', pomoState.breaksEarned);
 }
 function startPomo() {
     if (pomoState.isRunning) return;
-    pomoState.isRunning = true; document.getElementById('pomo-start').style.display = 'none'; document.getElementById('pomo-pause').style.display = 'inline-block';
-    pomoState.timerInterval = setInterval(() => {
-        pomoState.timeLeft--; updatePomoDisplay();
-        if (pomoState.timeLeft <= 0) { pausePomo(); playSound(); pomoState.breaksEarned++; updatePomoVault(); resetPomo(); }
+    pomoState.isRunning = true; 
+    document.getElementById('pomo-start').style.display = 'none'; 
+    document.getElementById('pomo-pause').style.display = 'inline-block';
+    
+    pomoState.timerInterval = setInterval(async () => {
+        pomoState.timeLeft--; 
+        updatePomoDisplay();
+        
+        if (pomoState.timeLeft <= 0) {
+            playSound();
+            const duration = Math.floor((pomoState.currentMode === 'work' ? pomoState.workTime : pomoState.breakTime) / 60);
+            
+            if (pomoState.currentMode === 'work') {
+                pomoState.breaksEarned++;
+                updatePomoBank();
+                // Log work session
+                await fetch('/api/focus/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        type: 'work',
+                        duration: duration
+                    })
+                });
+                loadPomoHistory();
+                
+                // Continue work session automatically
+                pomoState.timeLeft = pomoState.workTime;
+            } else {
+                // Break ended, switch back to work
+                pomoState.currentMode = 'work';
+                pomoState.timeLeft = pomoState.workTime;
+                updatePomoBank();
+            }
+            updatePomoDisplay();
+        }
     }, 1000);
 }
 function pausePomo() { pomoState.isRunning = false; clearInterval(pomoState.timerInterval); document.getElementById('pomo-start').style.display = 'inline-block'; document.getElementById('pomo-pause').style.display = 'none'; }
-function resetPomo() { pausePomo(); pomoState.timeLeft = pomoState.workTime; updatePomoDisplay(); }
+function resetPomo() { 
+    pausePomo(); 
+    pomoState.currentMode = 'work';
+    pomoState.timeLeft = pomoState.workTime; 
+    updatePomoDisplay(); 
+    updatePomoBank();
+}
+async function takeBreak() {
+    if (pomoState.breaksEarned > 0 && pomoState.currentMode !== 'break') {
+        pomoState.breaksEarned--;
+        pomoState.currentMode = 'break';
+        pomoState.timeLeft = pomoState.breakTime;
+        updatePomoBank();
+        updatePomoDisplay();
+        if (!pomoState.isRunning) startPomo();
+    }
+}
 async function loadPomoHistory() {
     const res = await fetch(`/api/focus/history?start=${new Date(Date.now()-604800000).toISOString()}&end=${new Date().toISOString()}`);
     const history = await res.json();

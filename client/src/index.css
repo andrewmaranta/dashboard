@@ -2,58 +2,92 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-  }
+:root {
+  --cozy-bg: #f7f3e9;
+  --cozy-bg-alt: #f1ede3;
+  --cozy-panel: #ffffff;
+  --cozy-text: #4a3f35;
+  --cozy-text-dark: #3d312b;
+  --cozy-text-muted: #8a817c;
+  --cozy-text-dim: #b8b0a0;
+  --cozy-accent: #8da08e; /* Sage Green */
+  --cozy-accent-dark: #6e7f6f;
+  --cozy-accent-soft: #a8bba9;
+  --cozy-warm: #d68060; /* Terracotta */
+  --cozy-gold: #e9c46a;
+  --cozy-border: #e2ddd2;
+}
 
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.6%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.6%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.6%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-  }
+.dark {
+  --cozy-bg: #1a1b1e;
+  --cozy-bg-alt: #2c2e33;
+  --cozy-panel: #25262b;
+  --cozy-text: #c1c2c5;
+  --cozy-text-dark: #eceef2;
+  --cozy-text-muted: #909296;
+  --cozy-text-dim: #5c5f66;
+  --cozy-accent: #8da08e;
+  --cozy-accent-dark: #4b5a4c;
+  --cozy-accent-soft: #3b4b3c;
+  --cozy-warm: #e8590c;
+  --cozy-gold: #fcc419;
+  --cozy-border: #373a40;
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--cozy-bg);
+    color: var(--cozy-text);
+    font-family: 'Quicksand', sans-serif;
+    @apply selection:bg-emerald-200 dark:selection:bg-emerald-900 transition-colors duration-300;
   }
+}
+
+@layer components {
+  .noto-emoji {
+    /* STRICT: Only Noto Emoji, then fallback to a generic that won't trigger system color emojis */
+    font-family: 'Noto Emoji', 'Courier New', monospace !important;
+    font-weight: 400;
+    font-variant-emoji: text !important;
+    color: currentColor !important;
+    -webkit-text-fill-color: currentColor !important;
+    display: inline-block;
+    line-height: 1;
+    text-decoration: none !important;
+  }
+  .cozy-card {
+    @apply bg-white border-2 border-[var(--cozy-border)] rounded-[2rem] shadow-[0_8px_0_0_#e2ddd2] transition-all duration-300;
+  }
+  .cozy-card:hover {
+    @apply transform -translate-y-1 shadow-[0_12px_0_0_#e2ddd2];
+  }
+  .cozy-button {
+    @apply bg-[var(--cozy-accent)] text-white font-bold px-6 py-3 rounded-2xl shadow-[0_4px_0_0_#6e7f6f] active:shadow-none active:translate-y-1 transition-all;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: #f1ede3; border-radius: 10px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #dcd7ca; border-radius: 10px; }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.3s ease-in-out;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+.animate-pop {
+  animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pop {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
