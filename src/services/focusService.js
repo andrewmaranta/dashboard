@@ -1,0 +1,38 @@
+const { DB_PATH } = require('../config');
+const { open } = require('sqlite');
+const sqlite3 = require('sqlite3');
+
+let db;
+async function getDb() {
+    if (!db) {
+        db = await open({ filename: DB_PATH, driver: sqlite3.Database });
+    }
+    return db;
+}
+
+async function initDb() {
+    // Tables are created during migration or startup by the main database connection
+    return await getDb();
+}
+
+async function logSession(timestamp, type, duration) {
+    const database = await getDb();
+    await database.run(
+        'INSERT INTO focus_sessions (timestamp, type, duration) VALUES (?, ?, ?)',
+        [timestamp, type, duration]
+    );
+}
+
+async function getHistory(start, end) {
+    const database = await getDb();
+    return await database.all(
+        'SELECT timestamp, type, duration FROM focus_sessions WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC',
+        [start, end]
+    );
+}
+
+module.exports = {
+    initDb,
+    logSession,
+    getHistory
+};

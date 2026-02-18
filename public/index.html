@@ -4,520 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Life Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Cozy Sanctuary Theme */
-        :root {
-            --accent-primary: #7a9e7e;                    /* Warm sage */
-            --accent-primary-soft: rgba(122, 158, 126, 0.15);
-            --accent-warm: #d4a373;                       /* Warm terracotta */
-            --accent-warm-soft: rgba(212, 163, 115, 0.15);
-            --bar-fill: linear-gradient(90deg, #d4a373, #7a9e7e); /* Warm gradient */
-            --glow: 0 0 15px rgba(122, 158, 126, 0.2);
-            --bg-dark: #1a1a1a;                           /* Warmer dark */
-            --panel-bg: rgba(45, 42, 38, 0.95);          /* Warm brown-gray */
-            --text-primary: #e8e2d9;                      /* Warm off-white */
-            --text-secondary: #a89f91;                    /* Muted warm gray */
-            --text-white: var(--text-primary);            /* Compatibility */
-            --border-accent: rgba(122, 158, 126, 0.4);
-            
-            /* Deprecated/Mapped */
-            --accent-red: #d4a373; /* Map red to terracotta for warmth */
-            --bar-bg: #2b2a28;
-            --accent-glow: drop-shadow(0 0 5px rgba(122, 158, 126, 0.2));
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&display=swap');
-        
-        @keyframes checkGlow {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
-        .gold-glow {
-            filter: var(--accent-glow);
-        }
-        body {
-            font-family: 'Nunito', -apple-system, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-white);
-            margin: 0;
-            padding: 30px;
-            /* Removed tech grid background, keeping soft dark */
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        h1, h2, h3 {
-            font-family: 'Fraunces', Georgia, serif;
-            color: var(--accent-primary);
-            text-transform: none; /* Removed uppercase */
-            letter-spacing: 0.5px;
-            margin: 0;
-            text-shadow: none; /* Removed harsh shadow */
-            font-weight: 600;
-        }
-        h1 { font-size: 2.2em; }
-        h2 { font-size: 1.6em; }
-        h3 { font-size: 1.2em; }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 32px;
-        }
-        .panel {
-            background: var(--panel-bg);
-            border: none;
-            border-radius: 24px;
-            padding: 32px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            position: relative;
-            transition: all 0.3s ease-out;
-        }
-        .panel:hover {
-            box-shadow: 0 4px 20px rgba(122, 158, 126, 0.1);
-        }
-        .left-panel { display: flex; flex-direction: column; gap: 20px; }
-        .attr-block {
-            display: flex;
-            align-items: center;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.05); /* very subtle */
-            border-radius: 16px; /* Rounded */
-            padding: 15px;
-            position: relative;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .attr-block:hover { 
-            transform: translateY(-2px); 
-            border-color: var(--accent-primary); 
-            box-shadow: var(--glow); 
-        }
-        .attr-icon {
-            width: 50px;
-            height: 50px;
-            background: var(--accent-primary-soft);
-            border: 2px solid var(--accent-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Fraunces', serif; /* Use serif for numbers/icons */
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--accent-primary);
-            margin-right: 15px;
-            position: relative;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .attr-details { flex-grow: 1; }
-        .attr-name { 
-            font-family: 'Nunito', sans-serif; 
-            font-size: 14px; 
-            color: var(--accent-primary); 
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        .attr-progress-bar { 
-            height: 8px; /* Thicker, softer */
-            background: rgba(0,0,0,0.2); 
-            border-radius: 10px; 
-            overflow: hidden; 
-            border: none;
-        }
-        .attr-progress-fill { 
-            height: 100%; 
-            background: var(--bar-fill); 
-            width: 0%; 
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
-            border-radius: 10px;
-            box-shadow: none; 
-        }
-        .attr-tooltip { 
-            position: absolute; 
-            left: 50%; 
-            bottom: 100%; 
-            transform: translateX(-50%);
-            background: rgba(45, 42, 38, 0.98); 
-            border: 1px solid var(--border-accent); 
-            padding: 12px; 
-            width: 200px; 
-            z-index: 9999; 
-            display: none; 
-            font-size: 13px; 
-            color: var(--text-primary); 
-            margin-bottom: 10px; 
-            pointer-events: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border-radius: 12px;
-        }
-        .attr-block {
-            position: relative;
-            overflow: visible;
-        }
-        .attr-block:hover .attr-tooltip { display: block; }
-        .header-panel { text-align: center; margin-bottom: 32px; border-bottom: 1px solid rgba(122, 158, 126, 0.2); padding-bottom: 20px; }
-        .level-badge { 
-            display: inline-flex; justify-content: center; align-items: center; 
-            width: 70px; 
-            height: 70px; 
-            border-radius: 50%; 
-            background: var(--bar-fill); 
-            color: #fff; 
-            font-family: 'Fraunces', serif;
-            font-size: 28px; 
-            font-weight: bold; 
-            box-shadow: 0 4px 15px rgba(122, 158, 126, 0.3);
-            margin-top: 15px; 
-            border: 4px solid rgba(255,255,255,0.2);
-            position: relative;
-        }
-        .level-badge::before { display: none; }
-        .nav-tabs { 
-            display: flex; 
-            justify-content: center; 
-            gap: 10px;
-            border-bottom: 1px solid rgba(122, 158, 126, 0.1); 
-            margin-bottom: 32px;
-            padding: 0 10px 15px 10px;
-        }
-        .nav-tab { 
-            padding: 10px 24px; 
-            cursor: pointer; 
-            color: var(--text-secondary); 
-            font-family: 'Nunito', sans-serif; 
-            font-size: 16px; 
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            position: relative;
-            margin: 0;
-            text-transform: none;
-            letter-spacing: 0.5px;
-            border-radius: 20px;
-        }
-        .nav-tab:hover {
-            color: var(--text-primary);
-            background: rgba(122, 158, 126, 0.1);
-        }
-        .nav-tab::before { display: none; }
-        .nav-tab.active {
-            color: #fff;
-            background: var(--accent-primary);
-            box-shadow: 0 4px 10px rgba(122, 158, 126, 0.25);
-        }
-        .nav-tab.active::before { display: none; }
-        .goal-list, .quest-list { list-style: none; padding: 0; }
-        .goal-item {
-            background: rgba(255,255,255,0.03);
-            margin-bottom: 12px;
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid transparent; /* Replaces border-left */
-            display: flex;
-            align-items: center;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        .goal-item:hover {
-            background: rgba(122, 158, 126, 0.05);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .checkbox-custom {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--text-secondary);
-            border-radius: 50%;
-            margin-right: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background: transparent;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-        .checkbox-custom:hover {
-            border-color: var(--accent-primary);
-            transform: scale(1.1);
-        }
-        .checkbox-custom.checked {
-            background: var(--accent-primary);
-            border-color: var(--accent-primary);
-            box-shadow: none;
-        }
-        .checkbox-custom.checked::before { display: none; }
-        .checkbox-custom.checked::after {
-            content: '✓';
-            color: #fff;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .goal-text {
-            font-size: 16px;
-            color: var(--text-primary);
-            flex-grow: 1;
-            transition: color 0.3s;
-            font-family: 'Nunito', sans-serif;
-        }
-        .goal-text.completed {
-            color: var(--text-secondary);
-            text-decoration: line-through;
-            font-style: italic;
-        }
-        .goal-points {
-            font-size: 12px;
-            color: var(--accent-primary);
-            background: rgba(122, 158, 126, 0.1);
-            padding: 4px 10px;
-            border-radius: 12px;
-            border: none;
-        }
-        .chart-container {
-            background: rgba(0,0,0,0.1);
-            padding: 20px;
-            border-radius: 20px;
-            border: none;
-        }
-        .section {
-            display: none;
-            animation: fadeIn 0.4s ease;
-        }
-        .section.active {
-            display: block;
-        }
-        /* Heatmap Styles */
-        .habit-heatmap {
-            position: relative;
-            padding: 15px;
-        }
-        .heatmap-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            margin-top: 10px;
-        }
-        .heatmap-day-labels {
-            display: grid;
-            grid-template-columns: 80px repeat(7, 1fr);
-            gap: 4px;
-            text-align: center;
-            color: var(--accent-primary);
-            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 11px;
-            margin-bottom: 4px;
-        }
-        .heatmap-row {
-            display: grid;
-            grid-template-columns: 80px repeat(7, 1fr);
-            gap: 4px;
-            align-items: center;
-        }
-        .heatmap-label {
-            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: var(--accent-primary);
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-        }
-        .heatmap-cell {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.05);
-            transition: all 0.2s;
-            position: relative;
-            cursor: pointer;
-        }
-        .heatmap-cell.partial {
-            background: var(--accent-warm);
-            opacity: 0.7;
-        }
-        .heatmap-cell.complete {
-            background: var(--accent-primary);
-        }
-        .heatmap-cell.perfect {
-            box-shadow: 0 0 8px var(--accent-primary-soft);
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-        .heatmap-cell:hover {
-            transform: scale(1.15);
-            z-index: 1;
-            border-radius: 8px;
-        }
-        .heatmap-tooltip {
-            position: absolute;
-            background: rgba(45, 42, 38, 0.98);
-            color: var(--text-primary);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            border: none;
-        }
-        .heatmap-cell:hover .heatmap-tooltip {
-            opacity: 1;
-        }
-        .heatmap-legend {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .legend-box {
-            width: 12px;
-            height: 12px;
-            border-radius: 4px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @media (max-width: 800px) {
-            body { padding: 15px; }
-            .container { 
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            .panel { padding: 20px; }
-            .nav-tabs {
-                gap: 8px;
-            }
-            .nav-tab {
-                flex: 1;
-                min-width: 80px;
-                padding: 10px;
-                text-align: center;
-                font-size: 14px;
-            }
-            .heatmap-grid {
-                font-size: 11px;
-            }
-            .heatmap-day-labels {
-                grid-template-columns: 60px repeat(7, 1fr);
-            }
-            .heatmap-row {
-                grid-template-columns: 60px repeat(7, 1fr);
-            }
-            .goal-text {
-                font-size: 14px;
-            }
-            .attr-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-        }
-        
-        /* Mobile phone breakpoint (375px and below) */
-        @media (max-width: 480px) {
-            body { padding: 10px; }
-            .container { gap: 10px; }
-            .panel { padding: 15px; border-radius: 16px; }
-            h1 { font-size: 1.6em; }
-            h2 { font-size: 1.3em; }
-            h3 { font-size: 1.1em; }
-            .nav-tabs {
-                flex-wrap: wrap;
-                gap: 5px;
-                padding-bottom: 10px;
-            }
-            .nav-tab {
-                flex: 1 1 calc(33% - 5px);
-                min-width: auto;
-                padding: 8px 5px;
-                font-size: 12px;
-                border-radius: 16px;
-            }
-            .level-badge {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-            }
-            .attr-block {
-                padding: 10px;
-            }
-            .attr-icon {
-                width: 36px;
-                height: 36px;
-                font-size: 14px;
-                margin-right: 10px;
-            }
-            .goal-item {
-                padding: 12px;
-            }
-            .checkbox-custom {
-                width: 20px;
-                height: 20px;
-                margin-right: 10px;
-            }
-            .goal-text {
-                font-size: 13px;
-            }
-            .heatmap-day-labels {
-                grid-template-columns: 50px repeat(7, 1fr);
-                font-size: 9px;
-            }
-            .heatmap-row {
-                grid-template-columns: 50px repeat(7, 1fr);
-            }
-            .heatmap-label {
-                font-size: 9px;
-            }
-            .chart-container {
-                padding: 10px;
-                height: 200px !important;
-            }
-        }
-        
-        /* Pomodoro Timer Specific Style */
-        .pomodoro-ritual {
-            margin-top: 20px;
-            padding: 24px;
-            text-align: center;
-            background: rgba(0,0,0,0.05);
-            border: none;
-            border-radius: 24px;
-        }
-        #timer-display { 
-            font-family: 'Fraunces', serif; 
-            font-size: 48px; 
-            color: var(--text-primary); 
-            margin: 10px 0; 
-            text-shadow: none; 
-            font-weight: 300; 
-        }
-        .timer-btn {
-            background: var(--accent-primary);
-            border: none;
-            color: #fff;
-            padding: 12px 24px;
-            font-family: 'Nunito', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            margin: 0 6px;
-            transition: all 0.2s;
-            border-radius: 50px;
-            box-shadow: 0 4px 10px rgba(122, 158, 126, 0.25);
-        }
-        .timer-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(122, 158, 126, 0.4);
-        }
-    </style>
 </head>
 <body>
 <div class="container">
@@ -547,6 +36,7 @@
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="switchTab('daily')">Daily Habits</div>
             <div class="nav-tab" onclick="switchTab('main')">Daily Goals</div>
+            <div class="nav-tab" onclick="switchTab('focus')">Focus</div>
             <div class="nav-tab" onclick="switchTab('health')">Health</div>
             <div class="nav-tab" onclick="switchTab('campaigns')">Projects</div>
             <div class="nav-tab" onclick="switchTab('wealth')">Finances</div>
@@ -556,138 +46,112 @@
                 <h3 style="margin-bottom: 15px;">Daily Habits</h3>
                 <div id="heatmap-grid" class="heatmap-grid"></div>
                 <div class="heatmap-legend" style="margin-top: 10px;">
-                    <div class="legend-item"><div class="legend-box" style="background: rgba(255,255,255,0.05)"></div>Missed (&lt;50%)</div>
+                    <div class="legend-item"><div class="legend-box" style="background: rgba(255,255,255,0.05)"></div>Missed (<50%)</div>
                     <div class="legend-item"><div class="legend-box" style="background: var(--accent-warm); opacity: 0.7;"></div>Partial (50-99%)</div>
                     <div class="legend-item"><div class="legend-box" style="background: var(--accent-primary)"></div>Complete (100%)</div>
                 </div>
             </div>
+            <h3 style="margin-bottom: 15px; margin-top: 30px;">Core Habits</h3>
+            <ul class="quest-list" id="core-habits-list" style="margin-bottom: 30px;"></ul>
+            
+            <h3 style="margin-bottom: 15px;">Daily Quests</h3>
             <ul class="quest-list" id="daily-list"></ul>
         </div>
         <div id="main" class="section"><ul class="goal-list" id="main-list"></ul></div>
+        
+        <!-- Focus Tab Content -->
+        <div id="focus" class="section">
+            <div class="pomodoro-ritual panel" style="padding: 40px; text-align: center;">
+                <h2 style="margin-bottom: 30px;">Focus Ritual</h2>
+                <div class="timer-container" style="width: 220px; height: 220px; margin: 0 auto;">
+                    <svg width="220" height="220" viewBox="0 0 220 220">
+                        <circle class="progress-ring-bg" cx="110" cy="110" r="100" stroke-width="8" fill="none" />
+                        <circle class="progress-ring-fg" id="pomodoro-ring" cx="110" cy="110" r="100" stroke-width="8" fill="none" stroke-dasharray="628.32" stroke-dashoffset="0" />
+                    </svg>
+                    <div id="timer-display" style="font-size: 48px;">45:00</div>
+                </div>
+                
+                <div class="timer-controls" style="margin-top: 30px;">
+                    <button id="pomo-start" class="timer-btn">Start Session</button>
+                    <button id="pomo-pause" class="timer-btn" style="display:none;">Pause</button>
+                    <button id="pomo-reset" class="timer-btn">Reset</button>
+                    <button id="pomo-settings-toggle" class="timer-btn">Settings</button>
+                </div>
+
+                <div class="break-bank" style="margin-top: 40px;">
+                    <h3>Vault of Rest</h3>
+                    <div id="pomo-tokens" style="min-height: 40px; margin: 15px 0;"></div>
+                    <button id="pomo-take-break" class="timer-btn" disabled>Claim Reward</button>
+                </div>
+
+                <div class="history-panel" style="margin-top: 40px; text-align: left;">
+                    <h3>Chronicles</h3>
+                    <div id="pomo-history" class="history-list"></div>
+                </div>
+            </div>
+        </div>
+
         <div id="health" class="section">
-            <div class="chart-container"><canvas id="healthChart"></canvas></div>
-            <div style="margin-top:20px; display:flex; justify-content:space-around; font-size:18px;">
-                <div>Weight: <span id="weight" style="color:var(--accent-primary); font-weight:bold;">-</span></div>
-                <div>Body Fat: <span id="bf" style="color:var(--accent-primary); font-weight:bold;">-</span></div>
+            <div class="chart-container" style="height:300px;"><canvas id="healthChart"></canvas></div>
+            <div style="margin-top:20px; display:flex; justify-content:space-around; font-size:18px; margin-bottom: 20px;">
+                <div>Weight: <span id="weight" class="editable" onclick="editStat('weight')">-</span> lbs</div>
+                <div>Body Fat: <span id="bf" class="editable" onclick="editStat('bf')">-</span>%</div>
+            </div>
+
+            <div class="panel" style="margin-bottom: 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                    <h3 style="margin:0;" id="meals-header">🍽️ Meals</h3>
+                    <input type="date" id="meal-date-picker" class="timer-btn" style="background: rgba(0,0,0,0.2); border: 1px solid var(--accent-primary); color: white; padding: 5px 10px;" onchange="loadMealsForDate(this.value)">
+                </div>
+                <div id="meals-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Meals will be inserted here -->
+                </div>
+                <div id="meals-summary" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(122, 158, 126, 0.2); font-weight: bold; display: flex; justify-content: space-around;">
+                    <div>Total Cal: <span id="meal-total-cal">0</span></div>
+                    <div>Total Protein: <span id="meal-total-protein">0</span>g</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                    <h3 style="margin:0;" id="daily-log-header">📜 Daily Log</h3>
+                    <button class="timer-btn" id="edit-log-btn" onclick="toggleEditLog()">Edit Log</button>
+                </div>
+                <div class="stats-grid" id="stats-display">
+                    <div class="stat-input-group">
+                        <label>Calories</label>
+                        <span id="display-calories" class="finance-value">-</span>
+                    </div>
+                    <div class="stat-input-group">
+                        <label>Protein (g)</label>
+                        <span id="display-protein" class="finance-value">-</span>
+                    </div>
+                </div>
+                <div class="stats-grid" id="stats-edit" style="display:none;">
+                    <div class="stat-input-group">
+                        <label>Calories</label>
+                        <input type="number" id="input-calories">
+                    </div>
+                    <div class="stat-input-group">
+                        <label>Protein (g)</label>
+                        <input type="number" id="input-protein">
+                    </div>
+                    <div style="grid-column: span 2; display:flex; gap:10px;">
+                        <button class="save-btn" style="flex:1;" onclick="saveDailyStats()">Save Changes</button>
+                        <button class="save-btn" style="flex:1; background:transparent; border:1px solid var(--accent-warm); color:var(--accent-warm);" onclick="toggleEditLog()">Cancel</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div id="campaigns" class="section">
-            <style>
-                .campaign-list {
-                    display: grid;
-                    gap: 20px;
-                }
-                .campaign-card {
-                    background: rgba(0,0,0,0.2);
-                    border: none;
-                    border-radius: 20px;
-                    padding: 24px;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                }
-                .campaign-card:hover {
-                    
-                    box-shadow: 0 4px 20px rgba(122, 158, 126, 0.1);
-                    transform: translateY(-2px);
-                }
-                .campaign-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                    margin-bottom: 15px;
-                }
-                .campaign-title {
-                    font-family: 'Fraunces', serif;
-                    color: var(--accent-primary);
-                    font-size: 20px;
-                    flex-grow: 1;
-                }
-                .campaign-attr {
-                    font-size: 14px;
-                    padding: 4px 10px;
-                    border: 1px solid var(--border-accent);
-                    border-radius: 12px;
-                }
-                .campaign-desc {
-                    color: var(--text-secondary);
-                    font-style: italic;
-                    margin-bottom: 15px;
-                }
-                .milestone-list {
-                    list-style: none;
-                    padding: 0;
-                }
-                .milestone-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    padding: 12px 0;
-                    border-top: 1px solid rgba(255,255,255,0.05);
-                }
-                .milestone-check {
-                    width: 24px;
-                    height: 24px;
-                    border: 2px solid var(--text-secondary);
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .milestone-check.completed {
-                    background: var(--accent-primary);
-                    border-color: var(--accent-primary);
-                    color: #fff;
-                }
-                .milestone-text {
-                    flex-grow: 1;
-                }
-                .milestone-points {
-                    font-size: 12px;
-                    color: var(--accent-primary);
-                    background: rgba(122, 158, 126, 0.1);
-                    padding: 2px 8px;
-                    border-radius: 10px;
-                    border: none;
-                }
-            </style>
             <div class="campaign-list" id="campaign-list">
                 <!-- Campaigns will be inserted here -->
             </div>
         </div>
         <div id="wealth" class="section">
-            <style>
-                .finance-card {
-                    text-align: center;
-                    padding: 20px;
-                    background: rgba(0,0,0,0.1);
-                    border-radius: 16px;
-                    border: none;
-                    transition: all 0.3s ease;
-                }
-                .finance-card:hover {
-                    transform: translateY(-2px);
-                    background: rgba(122, 158, 126, 0.05);
-                }
-                .finance-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 15px;
-                    margin-bottom: 20px;
-                }
-                .finance-label {
-                    font-family: 'Nunito', sans-serif;
-                    color: var(--text-secondary);
-                    font-size: 14px;
-                    margin-bottom: 5px;
-                }
-                .finance-value {
-                    font-size: 20px;
-                    font-weight: bold;
-                    font-family: 'Fraunces', serif;
-                }
-            </style>
+            <div style="text-align: right; margin-bottom: 20px;">
+                <button class="timer-btn" onclick="openFinanceModal()">Edit Finances</button>
+            </div>
             <div class="finance-grid">
                 <div class="finance-card">
                     <div class="finance-label">Net Worth</div>
@@ -735,336 +199,96 @@
         </div>
     </div>
 </div>
-<script>
-    const audio = new Audio('audio.mp3'); audio.volume = 0.4;
-    function playSound() { audio.currentTime = 0; audio.play().catch(e => console.log('Audio blocked')); }
-    const descriptions = { PWR: "Power", AGI: "Agility", VIT: "Vitality", KNW: "Knowledge", WEL: "Wellness", SOC: "Social" };
-    
-    function renderRadarChart(attrs) {
-        const ctx = document.getElementById('attributeRadar').getContext('2d');
-        const labels = ['PWR', 'AGI', 'VIT', 'KNW', 'WEL', 'SOC'];
-        const values = labels.map(attr => {
-            const score = attrs[attr]?.score || 10;
-            return Math.max(0, (score - 10) * 10);
-        });
+    <!-- Focus Settings Modal -->
+    <style>
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--panel-bg);
+            border: 2px solid var(--accent-primary);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .setting-group {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .setting-group input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--accent-primary);
+            color: #fff;
+            padding: 8px;
+            border-radius: 8px;
+            width: 60px;
+            text-align: center;
+        }
+    </style>
+    <div class="modal" id="pomo-settings-modal">
+        <div class="modal-content">
+            <h3>⚙️ Focus Settings</h3>
+            <div class="setting-group">
+                <label>Work (min):</label>
+                <input type="number" id="pomo-work-input" min="1" max="120">
+            </div>
+            <div class="setting-group">
+                <label>Break (min):</label>
+                <input type="number" id="pomo-break-input" min="1" max="60">
+            </div>
+            <div style="margin-top: 30px;">
+                <button id="pomo-save-settings" class="timer-btn">Save Ritual</button>
+                <button id="pomo-close-settings" class="timer-btn" style="background:transparent; border:1px solid var(--text-secondary);">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-        if (window.attributeChart) window.attributeChart.destroy();
-        window.attributeChart = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Attributes',
-                    data: values,
-                    backgroundColor: 'rgba(122, 158, 126, 0.2)',
-                    borderColor: '#7a9e7e',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#d4a373',
-                    pointBorderColor: '#e8e2d9',
-                    pointHoverBackgroundColor: '#e8e2d9',
-                    pointHoverBorderColor: '#d4a373'
-                }]
-            },
-            options: {
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: { display: false },
-                        grid: { color: 'rgba(122, 158, 126, 0.08)' },
-                        pointLabels: {
-                            color: '#7a9e7e',
-                            font: { family: 'Fraunces', size: 12 }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: (context) => {
-                                const attr = labels[context.dataIndex];
-                                const score = attrs[attr]?.score || 10;
-                                const xp = attrs[attr]?.xp || 0;
-                                const max = attrs[attr]?.max || 100;
-                                return `${attr}: ${score} | ${xp}/${max} Points`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function renderStreaks(streaks) {
-        const container = document.getElementById('streaks-container');
-        container.innerHTML = '';
-
-        const streakTypes = [
-            { id: 'calorieStreak', label: 'Calories', icon: 'C', attr: 'AGI' },
-            { id: 'proteinStreak', label: 'Protein', icon: 'P', attr: 'PWR' },
-            { id: 'readingStreak', label: "Reading", icon: 'R', attr: 'KNW' },
-            { id: 'digitalStreak', label: 'Screen Time', icon: 'D', attr: 'WEL' },
-            { id: 'socialStreak', label: "Social", icon: 'S', attr: 'SOC' },
-            { id: 'workoutStreak', label: 'Workouts', icon: 'W', attr: 'PWR', weekly: true }
-        ];
-        
-        // Add CSS for streak icons
-        const style = document.createElement('style');
-        style.textContent = `
-            .streak-icon {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 24px;
-                height: 24px;
-                border: 1px solid var(--accent-primary);
-                color: var(--accent-primary);
-                font-family: 'Fraunces', serif;
-                font-weight: bold;
-                font-size: 14px;
-                border-radius: 50%;
-                background: rgba(122, 158, 126, 0.1);
-            }
-            .streak-icon:hover {
-                background: var(--accent-primary);
-                color: #fff;
-                box-shadow: 0 0 10px rgba(122, 158, 126, 0.4);
-            }
-        `;
-        document.head.appendChild(style);
-
-        streakTypes.forEach(type => {
-            const streak = streaks[type.id] || 0;
-            const div = document.createElement('div');
-            div.className = 'streak-item';
-            div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:12px; background:rgba(255,255,255,0.03); border-radius:12px; border:none;';
-            
-            let streakHtml = `
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="streak-icon">${type.icon}</span>
-                    <span style="font-family:'Nunito', sans-serif;">${type.label}</span>
+    <!-- Finance Edit Modal -->
+    <div class="modal" id="finance-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3>💰 Update Finances</h3>
+            <div class="stats-grid" style="text-align: left; margin-bottom: 20px;">
+                <div class="stat-input-group">
+                    <label>Net Worth</label>
+                    <input type="text" id="f-netWorth">
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    ${streak > 0 ? `<span class="streak" style="color:var(--accent-warm);">🔥 ${streak}</span>` : '<span style="color:#666;">-</span>'}
-                    ${streak >= 3 ? '<span style="color:#7a9e7e; font-size:12px; border:1px solid #7a9e7e; padding:2px 6px; border-radius:10px;">+25% XP</span>' : ''}
+                <div class="stat-input-group">
+                    <label>Emergency Fund</label>
+                    <input type="text" id="f-emergencyFund">
                 </div>
-            `;
-            div.innerHTML = streakHtml;
-            container.appendChild(div);
-        });
-    }
-    
-    function renderHeatmap(data) {
-        const grid = document.getElementById('heatmap-grid');
-        grid.innerHTML = '';
+                <div class="stat-input-group">
+                    <label>Cash Reserve</label>
+                    <input type="text" id="f-cashReserve">
+                </div>
+                <div class="stat-input-group">
+                    <label>Monthly Income</label>
+                    <input type="text" id="f-income">
+                </div>
+                <div class="stat-input-group">
+                    <label>Burn Rate</label>
+                    <input type="text" id="f-burnRate">
+                </div>
+                <div class="stat-input-group">
+                    <label>Savings Rate</label>
+                    <input type="text" id="f-savingsRate">
+                </div>
+            </div>
+            <div style="margin-top: 30px; display:flex; gap:10px;">
+                <button class="save-btn" style="flex:1;" onclick="saveFinances()">Save Wealth Data</button>
+                <button class="save-btn" style="flex:1; background:transparent; border:1px solid var(--text-secondary);" onclick="closeFinanceModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-        // Helper to get local date string (YYYY-MM-DD) without timezone issues
-        function getLocalDateStr(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        // Get current week starting from Sunday
-        const today = new Date();
-        const currentDay = today.getDay(); // 0 = Sunday, 6 = Saturday
-        const sundayOffset = currentDay; // Days to go back to reach Sunday
-        
-        // Build week array (Sunday to Saturday)
-        const weekDays = [];
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - sundayOffset + i);
-            const dateStr = getLocalDateStr(date);
-            
-            // Find data for this date or create empty entry
-            const dayData = data.find(d => d.date === dateStr) || {
-                date: dateStr,
-                protein: 0,
-                calories: 0,
-                steps: 0,
-                foodLog: 0
-            };
-            weekDays.push(dayData);
-        }
-
-        // Add day labels with dates
-        const dayLabels = document.createElement('div');
-        dayLabels.className = 'heatmap-day-labels';
-        dayLabels.style.gridTemplateColumns = '80px repeat(7, 1fr)';
-        
-        // Empty corner cell
-        const corner = document.createElement('div');
-        dayLabels.appendChild(corner);
-        
-        // Day abbreviations with dates (Su, Mo, Tu, We, Th, Fr, Sa)
-        const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-        weekDays.forEach((day, index) => {
-            const date = new Date(day.date);
-            const label = document.createElement('div');
-            const dayNum = date.getDate();
-            label.innerHTML = `${dayNames[index]}<br><small>${dayNum}</small>`;
-            dayLabels.appendChild(label);
-        });
-        grid.appendChild(dayLabels);
-
-        // Add habit rows
-        const habits = [
-            { key: 'calories', label: 'Calories (AGI)' },
-            { key: 'protein', label: 'Protein (PWR)' },
-            { key: 'reading', label: "Reading (KNW)" },
-            { key: 'digital', label: 'Screen Time (WEL)' },
-            { key: 'social', label: "Social (SOC)" },
-            { key: 'workout', label: 'Workouts (PWR)', weekly: true }
-        ];
-        
-        habits.forEach(habit => {
-            const row = document.createElement('div');
-            row.className = 'heatmap-row';
-            
-            // Add label
-            const label = document.createElement('div');
-            label.className = 'heatmap-label';
-            label.textContent = habit.label;
-            row.appendChild(label);
-
-            // Add cells for each day of the week
-            weekDays.forEach(day => {
-                const cell = document.createElement('div');
-                cell.className = 'heatmap-cell';
-                
-                const value = day[habit.key];
-                if (value >= 100) {
-                    cell.classList.add('complete');
-                } else if (value >= 50) {
-                    cell.classList.add('partial');
-                }
-
-                // Add perfect day indicator
-                if (day.protein >= 100 && day.calories >= 100 && day.steps >= 100 && day.foodLog >= 100) {
-                    cell.classList.add('perfect');
-                }
-
-                // Add tooltip
-                const tooltip = document.createElement('div');
-                tooltip.className = 'heatmap-tooltip';
-                const [year, month, dayNum] = day.date.split('-');
-                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const dateStr = `${monthNames[parseInt(month) - 1]} ${parseInt(dayNum)}`;
-                tooltip.innerHTML = `${dateStr}<br>${habit.label}: ${Math.round(value)}%`;
-                cell.appendChild(tooltip);
-
-                row.appendChild(cell);
-            });
-
-            grid.appendChild(row);
-        });
-    }
-
-    async function init() {
-        await loadData();
-        // Load streaks and heatmap
-        try {
-            const [streaksRes, heatmapRes] = await Promise.all([
-                fetch('/api/streaks'),
-                fetch('/api/heatmap')
-            ]);
-            const [streaksData, heatmapData] = await Promise.all([
-                streaksRes.json(),
-                heatmapRes.json()
-            ]);
-            renderStreaks(streaksData);
-            renderHeatmap(heatmapData);
-        } catch (e) {
-            console.error('Failed to load data:', e);
-        }
-    }
-    async function loadData() {
-        try {
-            const qRes = await fetch('/api/quests'); const qData = await qRes.json();
-            renderAttributes(qData.attributes); renderHeader(qData.profile);
-            renderList('daily-list', qData.daily); renderList('main-list', qData.main);
-            const hRes = await fetch('/api/health'); const hData = await hRes.json(); renderHealth(hData);
-            const fRes = await fetch('/api/finance'); const fData = await fRes.json(); renderFinance(fData);
-        } catch (e) { console.error(e); }
-    }
-    function renderHeader(profile) { document.getElementById('char-class').textContent = profile.class; document.getElementById('level-badge').textContent = profile.level; }
-    function renderAttributes(attrs) {
-        const container = document.getElementById('attributes-list'); container.innerHTML = '';
-        ['PWR', 'AGI', 'VIT', 'KNW', 'WEL', 'SOC'].forEach(key => {
-            const attr = attrs[key] || { score: 10, xp: 0, max: 100 };
-            const mod = Math.floor((attr.score - 10) / 2);
-            const percent = Math.min(100, (attr.xp / attr.max) * 100);
-            const div = document.createElement('div'); div.className = 'attr-block';
-            div.innerHTML = `<div class="attr-icon">${attr.score}</div><div class="attr-details"><div class="attr-name">${key}</div><div class="attr-progress-bar"><div class="attr-progress-fill" style="width:${percent}%"></div></div></div><div class="attr-tooltip">${descriptions[key]}</div>`;
-            container.appendChild(div);
-        });
-        renderRadarChart(attrs);
-    }
-    function renderList(elId, items) {
-        const el = document.getElementById(elId); el.innerHTML = '';
-        items.forEach(item => {
-            const li = document.createElement('li'); li.className = 'goal-item';
-            li.innerHTML = `<div class="checkbox-custom ${item.completed ? 'checked' : ''}" onclick="event.stopPropagation(); toggleGoal('${item.text}', ${!item.completed})"></div><div class="goal-text ${item.completed ? 'completed' : ''}">${item.text}</div>`;
-            el.appendChild(li);
-        });
-    }
-    function renderHealth(data) {
-        if (!data || data.length === 0) return;
-        const last = data[data.length - 1]; document.getElementById('weight').textContent = last.weight + ' lbs'; document.getElementById('bf').textContent = last.bodyFat + '%';
-        const ctx = document.getElementById('healthChart').getContext('2d');
-        new Chart(ctx, { type: 'line', data: { labels: data.map(d => d.date), datasets: [{ label: 'Weight', data: data.map(d => d.weight), borderColor: '#d4a373', backgroundColor: 'rgba(212, 163, 115, 0.1)', tension: 0.3, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } } } } });
-    }
-    function renderFinance(data) {
-        document.getElementById('netWorth').textContent = data.netWorth || '-';
-        document.getElementById('emergencyFund').textContent = data.emergencyFund || '-';
-        document.getElementById('cashReserve').textContent = data.cashReserve || '-';
-        document.getElementById('income').textContent = data.income || '-';
-        document.getElementById('burnRate').textContent = data.burnRate || '-';
-        document.getElementById('savingsRate').textContent = data.savingsRate || '-';
-
-        // Progress bars
-        const efTarget = data.targets?.emergencyFund || 10000;
-        const efCurrent = parseInt((data.emergencyFund || '$0').replace(/[^0-9]/g, ''));
-        const efPercent = Math.min(100, Math.round((efCurrent / efTarget) * 100));
-        document.getElementById('efProgressBar').style.width = efPercent + '%';
-        document.getElementById('efProgressText').textContent = efPercent + '%';
-
-        const cbTarget = data.targets?.cashBuffer || 5000;
-        const cbCurrent = parseInt((data.cashReserve || '$0').replace(/[^0-9]/g, ''));
-        const cbPercent = Math.min(100, Math.round((cbCurrent / cbTarget) * 100));
-        document.getElementById('cbProgressBar').style.width = cbPercent + '%';
-        document.getElementById('cbProgressText').textContent = cbPercent + '%';
-    }
-    async function toggleGoal(text, shouldCheck) { if (shouldCheck) playSound(); await fetch('/api/quests/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questText: text }) }); loadData(); }
-    function switchTab(tabName) { document.querySelectorAll('.section').forEach(el => el.classList.remove('active')); document.getElementById(tabName).classList.add('active'); document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active')); const clickedTab = Array.from(document.querySelectorAll('.nav-tab')).find(el => el.getAttribute('onclick')?.includes(tabName)); if (clickedTab) clickedTab.classList.add('active'); }
-    
-    async function completeDashboardCheckIn() {
-        try {
-            await fetch('/api/quest-complete', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ questName: "Meta Habit: The Dashboard Check-In" }) 
-            });
-            playSound();
-            loadData();
-        } catch (e) {
-            console.error('Failed to complete check-in:', e);
-        }
-    }
-    
-    function updateDateDisplay() {
-        const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
-    }
-    
-    // Initialize date display on load
-    updateDateDisplay();
-    
-    // Initialize the app
-    init();
-</script>
+<script src="client.js"></script>
 </body>
 </html>
