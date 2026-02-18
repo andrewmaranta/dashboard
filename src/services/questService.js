@@ -82,7 +82,8 @@ async function getGoals() {
 
 async function completeDashboardCheckIn() {
     // Log dashboard review as a habit
-    const today = new Date().toISOString().split('T')[0];
+    const localNow = new Date();
+    const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const database = await getDb();
     await database.run(
         'INSERT INTO habits_log (date, habit, notes) VALUES (?, ?, ?)',

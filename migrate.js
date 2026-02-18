@@ -13,6 +13,7 @@ async function migrate() {
     });
 
     console.log('Creating tables...');
+    await db.exec('DROP TABLE IF EXISTS tasks');
     await db.exec(`
         CREATE TABLE IF NOT EXISTS nutrition_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,11 +23,7 @@ async function migrate() {
             protein REAL DEFAULT 0,
             carbs REAL DEFAULT 0,
             fat REAL DEFAULT 0,
-            fiber REAL DEFAULT 0,
-            steps INTEGER DEFAULT 0,
-            deep_work_hours REAL DEFAULT 0,
-            water_liters REAL DEFAULT 0,
-            financial_check_in TEXT
+            fiber REAL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS habits_log (
@@ -50,7 +47,42 @@ async function migrate() {
             type TEXT NOT NULL,
             duration INTEGER NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            text TEXT NOT NULL,
+            completed INTEGER DEFAULT 0,
+            attribute TEXT,
+            created_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS attributes (
+            code TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            score INTEGER DEFAULT 10,
+            xp INTEGER DEFAULT 0,
+            xp_max INTEGER DEFAULT 100
+        );
     `);
+
+    // Seed attributes if empty
+    const attrs = await db.get('SELECT COUNT(*) as count FROM attributes');
+    if (attrs.count === 0) {
+        const defaults = [
+            ['PWR', 'Power'], ['AGI', 'Agility'], ['VIT', 'Vitality'],
+            ['KNW', 'Knowledge'], ['WEL', 'Wellness'], ['SOC', 'Social']
+        ];
+        for (const [code, name] of defaults) {
+            await db.run('INSERT INTO attributes (code, name) VALUES (?, ?)', [code, name]);
+        }
+    }
+
+    // Check if tasks table has attribute column (for existing dbs)
+    try {
+        await db.run('ALTER TABLE tasks ADD COLUMN attribute TEXT');
+    } catch (e) {
+        // Column likely exists
+    }
 
     // Migration logic for Nutrition CSV
     const nutritionPath = path.join(DATA_DIR, 'nutrition.csv');
@@ -63,9 +95,9 @@ async function migrate() {
             const p = line.split(',').map(s => s.replace(/"/g, '').trim());
             if (p.length >= 10) {
                 await db.run(
-                    `INSERT INTO nutrition_log (date, item, calories, protein, carbs, fat, fiber, steps, deep_work_hours, water_liters, financial_check_in) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [p[0], p[1], parseFloat(p[2])||0, parseFloat(p[3])||0, parseFloat(p[4])||0, parseFloat(p[5])||0, parseFloat(p[6])||0, parseInt(p[7])||0, parseFloat(p[8])||0, parseFloat(p[9])||0, p[10]||'No']
+                    `INSERT INTO nutrition_log (date, item, calories, protein, carbs, fat, fiber) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [p[0], p[1], parseFloat(p[2])||0, parseFloat(p[3])||0, parseFloat(p[4])||0, parseFloat(p[5])||0, parseFloat(p[6])||0]
                 );
             }
         }

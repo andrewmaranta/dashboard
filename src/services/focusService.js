@@ -1,6 +1,7 @@
 const { DB_PATH } = require('../config');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3');
+const attributeService = require('./attributeService');
 
 let db;
 async function getDb() {
@@ -21,6 +22,11 @@ async function logSession(timestamp, type, duration) {
         'INSERT INTO focus_sessions (timestamp, type, duration) VALUES (?, ?, ?)',
         [timestamp, type, duration]
     );
+    
+    if (type === 'work') {
+        // 15 XP per session (approx 45m), or scaled? Let's do flat 15 for now as requested.
+        await attributeService.addXP('KNW', 15);
+    }
 }
 
 async function getHistory(start, end) {

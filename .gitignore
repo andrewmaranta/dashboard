@@ -1,3 +1,9 @@
 *.json
 *.csv
 *.bak
+node_modules/
+client/node_modules/
+client/dist/
+*.log
+*.sqlite
+focus.sqlite

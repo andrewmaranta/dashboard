@@ -29,7 +29,7 @@ async function getFinanceData() {
                 emergencyFund: 10000,
                 diningLimit: 400
             },
-            lastUpdated: new Date().toISOString().split('T')[0]
+            lastUpdated: new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0]
         };
     }
     
@@ -53,7 +53,8 @@ async function getFinanceData() {
 
 async function updateFinanceData(data) {
     const database = await getDb();
-    const today = new Date().toISOString().split('T')[0];
+    const localNow = new Date();
+    const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     
     await database.run(`
         UPDATE finance SET

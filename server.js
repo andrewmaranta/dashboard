@@ -12,8 +12,8 @@ const io = new Server(server, {
 });
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Attach io to requests for route access
 app.use((req, res, next) => {
@@ -22,6 +22,11 @@ app.use((req, res, next) => {
 });
 
 // Debug Route
+app.post('/api/echo', (req, res) => {
+    console.error('Echo body:', req.body);
+    res.json(req.body);
+});
+
 app.get('/api/debug/db', async (req, res) => {
     try {
         const { open } = require('sqlite');
@@ -45,6 +50,8 @@ const questRoutes = require('./src/routes/quests');
 const financeRoutes = require('./src/routes/finance');
 const habitRoutes = require('./src/routes/habits');
 const focusRoutes = require('./src/routes/focus');
+const taskRoutes = require('./src/routes/tasks');
+const bloodPressureRoutes = require('./src/routes/bloodPressure');
 
 // Mount API Routes
 app.use('/api', healthRoutes);
@@ -52,6 +59,8 @@ app.use('/api', questRoutes);
 app.use('/api', financeRoutes);
 app.use('/api', habitRoutes);
 app.use('/api', focusRoutes);
+app.use('/api', taskRoutes);
+app.use('/api', bloodPressureRoutes);
 
 // Socket Connection
 io.on('connection', (socket) => {

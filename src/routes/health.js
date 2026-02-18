@@ -50,7 +50,8 @@ router.get('/streaks', async (req, res) => {
 
 router.get('/heatmap', async (req, res) => {
     try {
-        const data = await healthService.getHeatmapData();
+        const date = req.query.date;
+        const data = await healthService.getHeatmapData(date);
         res.json(data);
     } catch (err) {
         console.error(err);
@@ -71,6 +72,19 @@ router.post('/daily-stats', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to update daily stats' });
+    }
+});
+
+router.post('/health/stats', async (req, res) => {
+    try {
+        const { weight, bodyFat } = req.body;
+        await healthService.updateHealthStats(weight, bodyFat);
+        const updatedData = await healthService.getHealthData();
+        req.io.emit('healthStatsUpdated', updatedData);
+        res.json({ success: true, data: updatedData });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update health stats' });
     }
 });
 
