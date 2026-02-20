@@ -43,11 +43,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 animate-pop">
+    <div className="max-w-4xl mx-auto space-y-10">
       
       {/* Header */}
       <div className="text-center space-y-2">
-        <span className="noto-emoji text-6xl text-cozy-warm mb-2 block">{M('📜')}</span>
+        <span className="noto-emoji text-6xl text-cozy-warm mb-2 block animate-float">{M('📜')}</span>
         <h2 className="text-3xl font-bold text-cozy-text-dark">Quest Journal</h2>
         <p className="text-cozy-text-muted font-bold text-sm uppercase tracking-widest">Embark on your daily adventures</p>
       </div>
@@ -80,7 +80,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
             onClick={handleAddTask}
             className="bg-cozy-warm text-white px-8 py-4 rounded-2xl font-bold shadow-[0_4px_0_0_var(--cozy-accent-dark)] hover:opacity-90 active:shadow-none active:translate-y-1 transition-all flex items-center gap-2"
           >
-            <span className="noto-emoji text-xl">{M('⚔')}</span>
+            <span className="noto-emoji text-xl animate-wiggle">{M('⚔')}</span>
             <span>Accept</span>
           </button>
         </div>

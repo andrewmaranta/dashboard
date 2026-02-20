@@ -1,8 +1,9 @@
 import React from 'react';
-import { Attributes } from '@/types';
+import { Attributes, HealthStat, Task, DailyHabits } from '@/types';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer 
 } from 'recharts';
+import { Lightbulb } from 'lucide-react';
 
 const M = (emoji: string) => `${emoji}\uFE0E`;
 
@@ -95,17 +96,65 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-      </div>
-    </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+            
+                  {/* Insights Section */}
+                  <div className="mt-16 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                    <div className="flex items-center gap-4 mb-8 px-2">
+                      <div className="p-3 bg-cozy-gold/10 rounded-2xl border-2 border-cozy-gold/20 text-cozy-gold animate-float">
+                        <Lightbulb size={28} />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-cozy-text-dark">Growth Insights</h3>
+                        <p className="text-cozy-text-dim font-bold text-sm uppercase tracking-widest mt-1">Patterns from your journey</p>
+                      </div>
+                    </div>
+            
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Insight 1 */}
+                      <div className="bg-cozy-panel p-8 rounded-[2.5rem] border-2 border-cozy-border shadow-[0_10px_0_0_var(--cozy-border)] hover:border-cozy-accent transition-all group">
+                        <div className="flex items-start gap-6">
+                           <div className="w-16 h-16 bg-cozy-accent/10 rounded-2xl flex items-center justify-center text-cozy-accent group-hover:scale-110 transition-transform">
+                             <span className="noto-emoji text-3xl">{M('🌿')}</span>
+                           </div>
+                           <div>
+                             <h4 className="text-lg font-bold text-cozy-text-dark mb-2">Productivity Pulse</h4>
+                             <p className="text-sm text-cozy-text-muted leading-relaxed italic">
+                               "You tend to complete <strong>20% more Quests</strong> on days when you follow your <strong>Workout</strong> ritual."
+                             </p>
+                           </div>
+                        </div>
+                      </div>
+            
+                      {/* Insight 2 */}
+                      <div className="bg-cozy-panel p-8 rounded-[2.5rem] border-2 border-cozy-border shadow-[0_10px_0_0_var(--cozy-border)] hover:border-cozy-warm transition-all group">
+                        <div className="flex items-start gap-6">
+                           <div className="w-16 h-16 bg-cozy-warm/10 rounded-2xl flex items-center justify-center text-cozy-warm group-hover:scale-110 transition-transform">
+                             <span className="noto-emoji text-3xl">{M('⏳')}</span>
+                           </div>
+                           <div>
+                             <h4 className="text-lg font-bold text-cozy-text-dark mb-2">Wellness Wave</h4>
+                             <p className="text-sm text-cozy-text-muted leading-relaxed italic">
+                               "Your focus is <strong>sharper</strong> when you log at least <strong>7.5 hours of sleep</strong> the night before."
+                             </p>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            
   );
 };
 
 interface AttributesViewProps {
   data: {
     attributes: Attributes;
+    healthStats: HealthStat[];
+    tasks: Task[];
+    habits: DailyHabits;
   };
 }

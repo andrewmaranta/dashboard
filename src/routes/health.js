@@ -88,4 +88,27 @@ router.post('/health/stats', async (req, res) => {
     }
 });
 
+router.get('/sleep', async (req, res) => {
+    try {
+        const history = await healthService.getSleepHistory();
+        res.json(history);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch sleep history' });
+    }
+});
+
+router.post('/sleep', async (req, res) => {
+    try {
+        const { hours, quality, notes } = req.body;
+        await healthService.updateSleep(hours, quality, notes);
+        const history = await healthService.getSleepHistory();
+        req.io.emit('sleepUpdated', history);
+        res.json({ success: true, history });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update sleep log' });
+    }
+});
+
 module.exports = router;

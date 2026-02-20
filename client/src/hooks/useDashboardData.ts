@@ -71,7 +71,7 @@ export const useDashboardData = () => {
     socket.on('financeUpdated', () => fetchData());
     socket.on('questUpdated', () => fetchData());
     socket.on('tasksUpdated', () => fetchData());
-    socket.on('xpGained', (data: { amount: number, attribute: string }) => {
+    socket.on('xpGainedV2', (data: { amount: number, attribute: string }) => {
       // Show notification if implementing notifications
       console.log(`XP Gained: +${data.amount} ${data.attribute}`);
       fetchData(); // Refresh attributes
@@ -83,7 +83,7 @@ export const useDashboardData = () => {
       socket.off('financeUpdated');
       socket.off('questUpdated');
       socket.off('tasksUpdated');
-      socket.off('xpGained');
+      socket.off('xpGainedV2');
     };
   }, []);
 

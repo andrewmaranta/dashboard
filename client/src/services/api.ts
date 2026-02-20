@@ -8,7 +8,9 @@ import {
   Attributes, 
   Campaign, 
   UserProfile, 
-  FocusSession 
+  FocusSession,
+  BloodPressureData,
+  SleepEntry
 } from '../types';
 
 // API Base URL - Backend runs on port 3000
@@ -47,12 +49,12 @@ export const api = {
     return data;
   },
 
-  toggleHabit: async (habit: string, date: string): Promise<void> => {
-    console.log('Toggling habit:', habit, 'for date:', date);
+  toggleHabit: async (habit: string, date: string, note?: string): Promise<void> => {
+    console.log('Toggling habit:', habit, 'for date:', date, 'note:', note);
     await fetch(`${API_BASE}/api/habits/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ habit, date })
+      body: JSON.stringify({ habit, date, note })
     });
   },
 
@@ -107,6 +109,34 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ weight, bodyFat })
+    });
+  },
+
+  getBloodPressure: async (): Promise<BloodPressureData> => {
+    const res = await fetch(`${API_BASE}/api/blood-pressure`);
+    if (!res.ok) throw new Error('Failed to fetch blood pressure data');
+    return res.json();
+  },
+
+  logBloodPressure: async (data: { systolic: number, diastolic: number, pulse: number, notes?: string }): Promise<void> => {
+    await fetch(`${API_BASE}/api/blood-pressure`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  },
+
+  getSleep: async (): Promise<SleepEntry[]> => {
+    const res = await fetch(`${API_BASE}/api/sleep`);
+    if (!res.ok) throw new Error('Failed to fetch sleep history');
+    return res.json();
+  },
+
+  updateSleep: async (hours: number, quality: number, notes?: string): Promise<void> => {
+    await fetch(`${API_BASE}/api/sleep`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hours, quality, notes })
     });
   },
 

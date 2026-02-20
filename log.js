@@ -18,15 +18,38 @@ async function logEntry(type, data) {
     try {
         switch(type) {
             case 'nutrition':
-                // data: { item, calories, protein, carbs, fat, fiber, date? }
-                const nutDate = data.date || today;
+                // data: { item, calories, protein, carbs, fat, fiber, date?, template? }
+                // If template is specified, look up the meal template
+                let mealData = data;
+                if (data.template) {
+                    const template = await db.get(
+                        'SELECT * FROM meal_templates WHERE name = ?',
+                        [data.template]
+                    );
+                    if (template) {
+                        mealData = {
+                            item: data.item || template.name,
+                            calories: template.calories,
+                            protein: template.protein,
+                            carbs: template.carbs,
+                            fat: template.fat,
+                            fiber: template.fiber,
+                            ...data
+                        };
+                        console.log(`📋 Using template: ${template.name}`);
+                    } else {
+                        console.log(`⚠️ Template not found: ${data.template}`);
+                    }
+                }
+                
+                const nutDate = mealData.date || today;
                 await db.run(
                     `INSERT INTO nutrition_log (date, item, calories, protein, carbs, fat, fiber) 
                      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                    [nutDate, data.item, data.calories || 0, data.protein || 0, 
-                     data.carbs || 0, data.fat || 0, data.fiber || 0]
+                    [nutDate, mealData.item, mealData.calories || 0, mealData.protein || 0, 
+                     mealData.carbs || 0, mealData.fat || 0, mealData.fiber || 0]
                 );
-                console.log(`🍽️  Logged: ${data.item} (${data.calories} cal, ${data.protein}g protein)`);
+                console.log(`🍽️  Logged: ${mealData.item} (${mealData.calories} cal, ${mealData.protein}g protein)`);
                 break;
 
             case 'habit':
@@ -82,6 +105,18 @@ async function logEntry(type, data) {
                 console.log(`🩺 Blood pressure logged: ${data.systolic}/${data.diastolic} (Pulse: ${data.pulse})`);
                 break;
 
+            case 'symptom':
+                // data: { symptoms, severity, triggers, notes?, date?, time? }
+                const sympDate = data.date || today;
+                const sympTime = data.time || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                await db.run(
+                    `INSERT INTO health_symptoms (date, time, symptoms, severity, triggers, notes) 
+                     VALUES (?, ?, ?, ?, ?, ?)`,
+                    [sympDate, sympTime, data.symptoms, data.severity || 5, data.triggers || '', data.notes || '']
+                );
+                console.log(`🩺 Symptom logged: ${data.symptoms} (Severity: ${data.severity}/10)`);
+                break;
+
             default:
                 console.log(`Unknown type: ${type}`);
         }
@@ -110,11 +145,15 @@ async function main() {
         console.log('');
         console.log('Examples:');
         console.log('  node log.js nutrition \'{"item":"Eggs","calories":300,"protein":20}\'');
+        console.log('  node log.js nutrition \'{"template":"Good Protein Smoothie","item":"Morning shake"}\'');
+        console.log('  node log.js nutrition \'{"template":"Canned Sockeye Salmon (213g can)"}\'');
         console.log('  node log.js habit \'{"habit":"Workout"}\'');
         console.log('  node log.js weight \'{"weight":210.5,"bodyFat":28}\'');
         console.log('  node log.js focus \'{"duration":45,"type":"work"}\'');
         console.log('  node log.js finance \'{"emergencyFund":7000}\'');
         console.log('  node log.js bp \'{"systolic":120,"diastolic":80,"pulse":72}\'');
+        console.log('');
+        console.log('Available templates: Good Protein Smoothie, Canned Sockeye Salmon, PC Free From Angus Beef Burger, etc.');
     }
 }
 

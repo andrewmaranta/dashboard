@@ -31,15 +31,25 @@ async function toggleTask(id) {
     const task = await database.get('SELECT * FROM tasks WHERE id = ?', [id]);
     if (!task) return;
 
+    // Toggle the task status
+    const newStatus = task.completed === 0 ? 1 : 0;
     await database.run(
-        'UPDATE tasks SET completed = NOT completed WHERE id = ?',
-        [id]
+        'UPDATE tasks SET completed = ? WHERE id = ?',
+        [newStatus, id]
     );
     
-    // Award XP if completing
+    // Handle XP
     let xpResult = null;
-    if (task.completed === 0 && task.attribute) {
-        xpResult = await attributeService.addXP(task.attribute, 20); // 20 XP for task completion
+    if (task.attribute) {
+        if (newStatus === 1) {
+            // Completing: Award XP
+            xpResult = await attributeService.addXP(task.attribute, 20);
+            if (xpResult) xpResult.type = 'gained';
+        } else {
+            // Unchecking: Remove XP
+            xpResult = await attributeService.removeXP(task.attribute, 20);
+            if (xpResult) xpResult.type = 'removed';
+        }
     }
     return { success: true, xp: xpResult };
 }

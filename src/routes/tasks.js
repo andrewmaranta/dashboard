@@ -34,7 +34,7 @@ router.post('/tasks/toggle', async (req, res) => {
         req.io.emit('tasksUpdated', tasks);
         
         if (result && result.xp) {
-            req.io.emit('xpGained', { attribute: result.xp.code, amount: result.xp.xpGained });
+            req.io.emit('xpGainedV2', { attribute: result.xp.code, amount: result.xp.xpGained });
         }
         
         res.json(tasks);

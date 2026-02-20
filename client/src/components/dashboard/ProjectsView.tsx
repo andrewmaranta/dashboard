@@ -3,6 +3,26 @@ import { Campaign } from '@/types';
 
 const M = (emoji: string) => `${emoji}\uFE0E`;
 
+const getProjectIcon = (name: string, attribute: string) => {
+  const n = name.toLowerCase();
+  if (n.includes('strength')) return M('🏋');
+  if (n.includes('body')) return M('⚖');
+  if (n.includes('financial')) return M('💰');
+  if (n.includes('knowledge')) return M('📚');
+  if (n.includes('mental')) return M('🧘');
+  if (n.includes('social')) return M('🤝');
+  
+  switch (attribute) {
+    case 'PWR': return M('⚔');
+    case 'AGI': return M('🏹');
+    case 'VIT': return M('🛡');
+    case 'KNW': return M('📜');
+    case 'WEL': return M('🧡');
+    case 'SOC': return M('💬');
+    default: return M('⛺');
+  }
+};
+
 interface ProjectsViewProps {
   data: {
     campaigns: Campaign[];
@@ -29,7 +49,9 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ data }) => {
               </h3>
             </div>
             <div className="bg-cozy-bg-alt p-4 rounded-[1.5rem] border-2 border-cozy-border group-hover:bg-cozy-accent/10 group-hover:border-cozy-accent transition-all">
-              <span className="noto-emoji text-3xl text-cozy-accent group-hover:scale-110 transition-transform block leading-none">{M('⛺')}</span>
+              <span className="noto-emoji text-3xl text-cozy-accent group-hover:scale-110 transition-transform block leading-none">
+                {getProjectIcon(project.name, project.attribute)}
+              </span>
             </div>
           </div>
 

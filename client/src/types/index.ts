@@ -1,11 +1,12 @@
 export interface DailyHabits {
   _date: string;
   workout: boolean;
+  workoutType?: string;
   read20Min: boolean;
   digitalSunset: boolean;
   socialInteraction: boolean;
   medication: boolean;
-  [key: string]: boolean | string | number;
+  [key: string]: boolean | string | number | undefined;
 }
 
 export interface Task {
@@ -74,6 +75,35 @@ export interface FocusSession {
   timestamp: string;
   type: 'work' | 'break';
   duration: number;
+}
+
+export interface BloodPressureReading {
+  id?: number;
+  date: string;
+  time: string;
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+  notes?: string;
+}
+
+export interface BloodPressureData {
+  history: BloodPressureReading[];
+  stats: {
+    avgSystolic: number;
+    avgDiastolic: number;
+    avgPulse: number;
+    totalReadings: number;
+  };
+  latest: BloodPressureReading;
+}
+
+export interface SleepEntry {
+  id?: number;
+  date: string;
+  hours: number;
+  quality: number;
+  notes?: string;
 }
 
 export interface UserProfile {

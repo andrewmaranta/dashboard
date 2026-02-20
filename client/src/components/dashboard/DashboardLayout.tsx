@@ -55,18 +55,18 @@ export const DashboardLayout: React.FC = () => {
       <div className="max-w-6xl mx-auto py-8 px-6 space-y-8 relative z-10">
         
         {/* Header */}
-        <header className="flex flex-col md:flex-row justify-between items-center bg-cozy-panel/60 p-8 rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)]">
+        <header className="flex flex-col md:flex-row justify-between items-center bg-cozy-panel/60 p-8 rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] animate-blur-in">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-cozy-accent rounded-3xl flex items-center justify-center text-white shadow-[0_6px_0_0_var(--cozy-accent-dark)]">
+            <div className="w-20 h-20 bg-cozy-accent rounded-3xl flex items-center justify-center text-white shadow-[0_6px_0_0_var(--cozy-accent-dark)] animate-float">
               <span className="text-3xl font-bold">{profile?.level || 1}</span>
             </div>
-            <div>
+            <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               <h1 className="text-4xl font-bold text-cozy-text-dark tracking-tight">{profile?.name || 'Andrew'}</h1>
               <div className="text-cozy-accent font-bold text-lg">{profile?.class || 'Novice'}</div>
             </div>
           </div>
           
-          <div className="mt-6 md:mt-0 flex flex-col items-center md:items-end gap-3">
+          <div className="mt-6 md:mt-0 flex flex-col items-center md:items-end gap-3 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
              <div className="flex items-center gap-4">
                <div className="text-sm font-bold text-cozy-text-dim uppercase tracking-widest">
                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -86,7 +86,7 @@ export const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Tab Navigation */}
-        <nav className="flex overflow-x-auto pb-4 gap-4 no-scrollbar justify-center">
+        <nav className="flex overflow-x-auto pb-4 gap-4 no-scrollbar justify-center animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (

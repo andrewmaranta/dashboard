@@ -52,7 +52,7 @@ async function getTodayHabits(requestedDate) {
     const database = await getDb();
     
     // Check for specific date
-    let rows = await database.all('SELECT habit FROM habits_log WHERE date = ?', [dateToFetch]);
+    let rows = await database.all('SELECT habit, notes FROM habits_log WHERE date = ?', [dateToFetch]);
     let resultDate = dateToFetch;
     let isToday = (dateToFetch === today);
 
@@ -60,7 +60,7 @@ async function getTodayHabits(requestedDate) {
         // Find latest date with habits only if no specific date requested
         const latest = await database.get('SELECT date FROM habits_log ORDER BY date DESC LIMIT 1');
         if (latest) {
-            rows = await database.all('SELECT habit FROM habits_log WHERE date = ?', [latest.date]);
+            rows = await database.all('SELECT habit, notes FROM habits_log WHERE date = ?', [latest.date]);
             resultDate = latest.date;
             isToday = (resultDate === today);
         }
@@ -73,12 +73,18 @@ async function getTodayHabits(requestedDate) {
         socialInteraction: false,
         medication: false,
         _date: resultDate,
-        _isToday: isToday
+        _isToday: isToday,
+        workoutType: null
     };
 
     rows.forEach(r => {
         const normalized = habitMapping[r.habit];
-        if (normalized) status[normalized] = true;
+        if (normalized) {
+            status[normalized] = true;
+            if (normalized === 'workout') {
+                status.workoutType = r.notes;
+            }
+        }
     });
     return status;
 }
@@ -140,28 +146,43 @@ async function getHabitStreaks() {
     });
 }
 
-async function toggleHabit(habitName, requestedDate) {
+async function toggleHabit(habitName, requestedDate, note) {
     const localNow = new Date();
     const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const dateToToggle = requestedDate || today;
     const targetHabit = reverseHabitMapping[habitName] || habitName;
     const database = await getDb();
 
-    const existing = await database.get('SELECT id FROM habits_log WHERE date = ? AND habit = ?', [dateToToggle, targetHabit]);
+    const existing = await database.get('SELECT id, notes FROM habits_log WHERE date = ? AND habit = ?', [dateToToggle, targetHabit]);
 
     let xpResult = null;
     if (existing) {
-        await database.run('DELETE FROM habits_log WHERE id = ?', [existing.id]);
+        // If a new note is provided and it's different, update instead of toggle off
+        if (note && existing.notes !== note) {
+            await database.run('UPDATE habits_log SET notes = ? WHERE id = ?', [note, existing.id]);
+            // No XP change for note update
+        } else {
+            await database.run('DELETE FROM habits_log WHERE id = ?', [existing.id]);
+            
+            // Remove XP
+            const normalized = habitMapping[targetHabit] || targetHabit;
+            const attrCode = habitAttributes[normalized];
+            if (attrCode) {
+                xpResult = await attributeService.removeXP(attrCode, 10);
+                xpResult.type = 'removed'; // Tag for frontend
+            }
+        }
     } else {
         await database.run(
             'INSERT INTO habits_log (date, habit, notes) VALUES (?, ?, ?)',
-            [dateToToggle, targetHabit, 'Logged via Dashboard']
+            [dateToToggle, targetHabit, note || 'Logged via Dashboard']
         );
         // Award XP
         const normalized = habitMapping[targetHabit] || targetHabit;
         const attrCode = habitAttributes[normalized];
         if (attrCode) {
             xpResult = await attributeService.addXP(attrCode, 10);
+            xpResult.type = 'gained';
         }
     }
     return { success: true, xp: xpResult };

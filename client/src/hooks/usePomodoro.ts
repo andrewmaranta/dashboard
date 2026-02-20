@@ -23,6 +23,11 @@ export const usePomodoro = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Request notification permission on mount
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+
     // Load saved settings
     const savedWork = localStorage.getItem('pomoWorkTime');
     const savedBreak = localStorage.getItem('pomoBreakTime');
@@ -60,8 +65,11 @@ export const usePomodoro = () => {
   }, [state.isRunning]);
 
   const handleTimerComplete = (currentState: PomodoroState) => {
-    const audio = new Audio('/audio.mp3');
-    audio.play().catch(e => console.log('Audio blocked', e));
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(currentState.mode === 'work' ? 'Time for a break! 🍵' : 'Break over, let\'s focus! ⏳', {
+        body: currentState.mode === 'work' ? 'You\'ve earned a tea break. Great job!' : 'Back to your quest. You got this!',
+      });
+    }
 
     if (currentState.mode === 'work') {
       const newEarned = currentState.breaksEarned + 1;

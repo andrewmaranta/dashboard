@@ -23,7 +23,7 @@ export const FocusView: React.FC = () => {
   const minutes = Math.floor(state.timeLeft / 60);
   const seconds = state.timeLeft % 60;
   const totalDuration = state.mode === 'work' ? state.workDuration : state.breakDuration;
-  const offset = 2 * Math.PI * 90 * (1 - state.timeLeft / totalDuration);
+  const offset = 2 * Math.PI * 120 * (1 - state.timeLeft / totalDuration);
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 animate-pop">
@@ -38,15 +38,15 @@ export const FocusView: React.FC = () => {
 
           <div className="relative w-72 h-72 flex items-center justify-center z-10">
             <svg className="w-full h-full -rotate-90 transform">
-              <circle cx="144" cy="144" r="90" stroke="var(--cozy-bg-alt)" strokeWidth="12" fill="transparent" />
+              <circle cx="144" cy="144" r="120" stroke="var(--cozy-bg-alt)" strokeWidth="12" fill="transparent" />
               <circle
                 cx="144"
                 cy="144"
-                r="90"
+                r="120"
                 stroke={state.mode === 'work' ? 'var(--cozy-accent)' : 'var(--cozy-warm)'}
                 strokeWidth="12"
                 fill="transparent"
-                strokeDasharray={2 * Math.PI * 90}
+                strokeDasharray={2 * Math.PI * 120}
                 strokeDashoffset={offset}
                 strokeLinecap="round"
                 className="transition-all duration-1000"
@@ -121,7 +121,7 @@ export const FocusView: React.FC = () => {
               {state.breaksEarned > 0 ? Array.from({ length: state.breaksEarned }).map((_, i) => (
                 <span key={i} className="noto-emoji text-3xl animate-bounce" style={{ animationDelay: `${i * 0.1}s` }}>{M('🍵')}</span>
               )) : (
-                <span className="text-cozy-text-dim italic text-sm font-bold flex items-center gap-2 px-4 py-2">No tea earned yet. Time to focus!</span>
+                <span className="text-cozy-text-dim italic text-sm font-bold flex items-center gap-2 px-4 py-2">No breaks earned</span>
               )}
             </div>
             <button 

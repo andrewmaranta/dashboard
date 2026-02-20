@@ -36,8 +36,8 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
   const [habits, setHabits] = useState<DailyHabits | null>(data.habits);
   const [heatmap, setHeatmap] = useState<any[]>(data.heatmap);
   
-  const [ritualDate, setRitualDate] = useState(new Date().toISOString().split('T')[0]);
-  const [heatmapDate, setHeatmapDate] = useState(new Date().toISOString().split('T')[0]);
+  const [ritualDate, setRitualDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [heatmapDate, setHeatmapDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
     const fetchHabits = async () => {
@@ -57,13 +57,59 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
 
   const toggleHabit = async (key: string) => {
     if (!habits) return;
+    
+    let note = undefined;
+    
+    // Cycle logic for workout
+    if (key === 'workout') {
+      const types = ['10k Steps', 'Cardio', 'Weightlifting', 'Rest Day'];
+      const currentType = habits.workoutType;
+      
+      if (!habits.workout) {
+        // Off -> First type
+        note = types[0];
+      } else {
+        // Find current index
+        const idx = types.indexOf(currentType || '');
+        if (idx === -1 || idx === types.length - 1) {
+          // Last type or unknown -> Off
+          // Pass currentType to toggle it OFF
+          note = currentType || 'Logged via Dashboard';
+        } else {
+          // Next type
+          note = types[idx + 1];
+        }
+      }
+    }
+
+    // Optimistic update
     const newHabits = { ...habits, [key]: !habits[key] };
+    // If we're just updating the note (staying ON), keep it true
+    if (key === 'workout' && note && habits.workout && note !== habits.workoutType) {
+        newHabits.workout = true;
+        newHabits.workoutType = note;
+    } else if (key === 'workout' && !habits.workout) {
+        newHabits.workout = true;
+        newHabits.workoutType = note;
+    } else if (key === 'workout') {
+        newHabits.workout = false;
+        newHabits.workoutType = undefined;
+    }
+
     setHabits(newHabits);
     try { 
-      await api.toggleHabit(key, ritualDate);
+      await api.toggleHabit(key, ritualDate, note);
       const res = await api.getHeatmap(heatmapDate);
       setHeatmap(res);
-    } catch (e) { setHabits(habits); }
+      // Refresh habits to get canonical state
+      const fresh = await api.getHabits(ritualDate);
+      setHabits(fresh);
+    } catch (e) { 
+        console.error(e);
+        // Revert on error
+        const fresh = await api.getHabits(ritualDate);
+        setHabits(fresh);
+    }
   };
 
   const changeRitualDate = (delta: number) => {
@@ -91,7 +137,7 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
         <div className="lg:col-span-3 bg-cozy-panel p-10 rounded-[2.5rem] border-2 border-cozy-border shadow-[0_10px_0_0_var(--cozy-border)]">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
             <h3 className="text-2xl font-bold text-cozy-text-dark flex items-center gap-3">
-              <span className="noto-emoji text-cozy-gold">{M('✨')}</span>
+              <span className="noto-emoji text-cozy-gold animate-float">{M('✨')}</span>
               Weekly Rhythm
             </h3>
             
@@ -124,8 +170,18 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
               <div key={row.key} className="flex items-center">
                 <div className="w-24 text-xs font-bold text-cozy-text-muted">{row.label}</div>
                 {heatmap && heatmap.length > 0 ? heatmap.map((dayData, idx) => (
-                  <div key={idx} className="flex-1 flex justify-center p-1">
+                  <div key={idx} className="flex-1 flex justify-center p-1 group relative">
                     <div className={`w-10 h-10 rounded-xl transition-all duration-500 border-2 border-cozy-border/30 ${getCellColor(dayData[row.key] || 0)}`} />
+                    
+                    {/* Tooltip for Workout Notes */}
+                    {row.key === 'workout' && dayData.streaks?.workoutNote && (
+                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+                        <div className="bg-cozy-text-dark text-cozy-bg px-3 py-1.5 rounded-xl text-xs font-bold shadow-xl border border-cozy-border">
+                          {dayData.streaks.workoutNote}
+                        </div>
+                        <div className="w-2 h-2 bg-cozy-text-dark rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+                      </div>
+                    )}
                   </div>
                 )) : <div className="flex-1 text-center text-cozy-border italic text-xs">Waiting for data...</div>}
               </div>
@@ -136,7 +192,7 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
         {/* Habits Checklist */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-cozy-accent p-8 rounded-[2.5rem] text-white shadow-[0_10px_0_0_var(--cozy-accent-dark)] mb-8 relative overflow-hidden">
-            <span className="noto-emoji absolute -top-4 -right-4 opacity-20 rotate-12 text-9xl">{M('📅')}</span>
+            <span className="noto-emoji absolute -top-4 -right-4 opacity-20 rotate-12 text-9xl animate-float">{M('📅')}</span>
             <div className="flex justify-between items-start relative z-10">
               <div>
                 <h3 className="text-2xl font-bold flex items-center gap-3 mb-1">
@@ -170,6 +226,8 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
             {Object.keys(HABIT_METADATA).map(key => {
               const meta = HABIT_METADATA[key];
               const isDone = !!habits?.[key];
+              const displayLabel = (key === 'workout' && habits?.workoutType) ? habits.workoutType : meta.label;
+              
               return (
                 <button
                   key={key}
@@ -177,14 +235,14 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
                   className={`w-full flex items-center justify-between p-6 rounded-3xl border-2 transition-all ${
                     isDone 
                       ? 'bg-cozy-panel border-cozy-accent shadow-[0_6px_0_0_var(--cozy-accent)] -translate-y-1' 
-                      : 'bg-cozy-panel border-cozy-border shadow-[0_4px_0_0_var(--cozy-border)] hover:border-cozy-text-dim/30'
+                      : 'bg-cozy-panel border-cozy-border shadow-[0_4px_0_0_var(--cozy-border)] hover:-translate-y-0.5 hover:shadow-[0_5px_0_0_var(--cozy-border)] hover:border-cozy-text-dim/30'
                   }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDone ? 'bg-cozy-accent/10' : 'bg-cozy-bg-alt'}`}>
                       <span className="noto-emoji text-2xl">{meta.icon}</span>
                     </div>
-                    <span className={`font-bold text-lg ${isDone ? 'text-cozy-text' : 'text-cozy-text-muted'}`}>{meta.label}</span>
+                    <span className={`font-bold text-lg ${isDone ? 'text-cozy-text' : 'text-cozy-text-muted'}`}>{displayLabel}</span>
                   </div>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isDone ? 'bg-cozy-accent border-cozy-accent rotate-0 shadow-inner' : 'border-cozy-border rotate-12'}`}>
                     {isDone ? <span className="noto-emoji text-white text-lg font-bold">{M('✓')}</span> : <span className="noto-emoji text-cozy-border text-lg">{M('○')}</span>}

@@ -1,6 +1,6 @@
 const socket = io();
-const audio = new Audio('audio.mp3'); audio.volume = 0.4;
-function playSound() { audio.currentTime = 0; audio.play().catch(e => console.log('Audio blocked')); }
+// Audio removed
+function playSound() { /* No-op */ }
 
 // Socket.io Real-time Updates
 socket.on('habitUpdated', (data) => {

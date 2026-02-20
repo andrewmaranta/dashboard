@@ -56,14 +56,17 @@ async function getHeatmapData(requestedDate) {
     const { habitMapping } = habitService;
     
     const nRows = await database.all(`SELECT date, SUM(calories) as calories, SUM(protein) as protein FROM nutrition_log GROUP BY date`);
-    const hRows = await database.all(`SELECT date, habit FROM habits_log`);
+    const hRows = await database.all(`SELECT date, habit, notes FROM habits_log`);
 
     const dailyStats = new Map();
-    nRows.forEach(r => dailyStats.set(r.date, { calories: r.calories, protein: r.protein, habits: new Set() }));
+    nRows.forEach(r => dailyStats.set(r.date, { calories: r.calories, protein: r.protein, habits: new Set(), workoutNote: null }));
     hRows.forEach(r => {
-        if (!dailyStats.has(r.date)) dailyStats.set(r.date, { calories: 0, protein: 0, habits: new Set() });
+        if (!dailyStats.has(r.date)) dailyStats.set(r.date, { calories: 0, protein: 0, habits: new Set(), workoutNote: null });
         const normalized = habitMapping[r.habit] || r.habit;
         dailyStats.get(r.date).habits.add(normalized);
+        if (normalized === 'workout') {
+            dailyStats.get(r.date).workoutNote = r.notes;
+        }
     });
 
     // Calculate streaks across all history day-by-day
@@ -78,7 +81,7 @@ async function getHeatmapData(requestedDate) {
 
         for (let d = new Date(firstDate); d <= lastDate; d.setDate(d.getDate() + 1)) {
             const dStr = d.toISOString().split('T')[0];
-            const stats = dailyStats.get(dStr) || { calories: 0, protein: 0, habits: new Set() };
+            const stats = dailyStats.get(dStr) || { calories: 0, protein: 0, habits: new Set(), workoutNote: null };
             
             const results = {
                 workout: stats.habits.has('workout'),
@@ -87,11 +90,14 @@ async function getHeatmapData(requestedDate) {
                 socialInteraction: stats.habits.has('socialInteraction'),
                 medication: stats.habits.has('medication'),
                 calories: (stats.calories > 0 && stats.calories <= 1800) ? 1 : (stats.calories > 1800 && stats.calories <= 2000 ? 0.5 : 0),
-                protein: (stats.protein >= 150) ? 1 : (stats.protein > 100 ? 0.5 : 0)
+                protein: (stats.protein >= 150) ? 1 : (stats.protein > 100 ? 0.5 : 0),
+                workoutNote: stats.workoutNote
             };
 
-            const dailyResults = {};
+            const dailyResults = { workoutNote: results.workoutNote };
             Object.keys(results).forEach(k => {
+                if (k === 'workoutNote') return;
+                
                 if (results[k] === true || results[k] === 1) {
                     runningStreaks[k]++;
                     dailyResults[k] = runningStreaks[k];
@@ -203,6 +209,31 @@ async function updateHealthStats(weight, bodyFat) {
     return true;
 }
 
+async function getSleepHistory(limit = 30) {
+    const database = await getDb();
+    return await database.all('SELECT * FROM sleep_log ORDER BY date DESC LIMIT ?', [limit]);
+}
+
+async function updateSleep(hours, quality, notes = '') {
+    const localNow = new Date();
+    const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+    const database = await getDb();
+    
+    const existing = await database.get('SELECT id FROM sleep_log WHERE date = ?', [today]);
+    if (existing) {
+        await database.run(
+            'UPDATE sleep_log SET hours = ?, quality = ?, notes = ? WHERE id = ?',
+            [hours, quality, notes, existing.id]
+        );
+    } else {
+        await database.run(
+            'INSERT INTO sleep_log (date, hours, quality, notes) VALUES (?, ?, ?, ?)',
+            [today, hours, quality, notes]
+        );
+    }
+    return true;
+}
+
 module.exports = {
     getHealthData,
     getDailyStats,
@@ -210,5 +241,7 @@ module.exports = {
     getStreaks,
     updateDailyStats,
     getMealsForDate,
-    updateHealthStats
+    updateHealthStats,
+    getSleepHistory,
+    updateSleep
 };

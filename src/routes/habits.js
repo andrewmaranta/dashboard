@@ -35,8 +35,8 @@ router.get('/habits/streaks', async (req, res) => {
 
 router.post('/habits/toggle', async (req, res) => {
     try {
-        const { habit, date } = req.body;
-        const result = await habitService.toggleHabit(habit, date);
+        const { habit, date, note } = req.body;
+        const result = await habitService.toggleHabit(habit, date, note);
         const updatedHabits = await habitService.getTodayHabits(date);
         const weekly = await habitService.getWeeklyHabits();
         const streaks = await habitService.getHabitStreaks();
@@ -44,7 +44,7 @@ router.post('/habits/toggle', async (req, res) => {
         req.io.emit('habitUpdated', { today: updatedHabits, weekly, streaks, date });
         
         if (result.xp) {
-            req.io.emit('xpGained', { attribute: result.xp.code, amount: result.xp.xpGained });
+            req.io.emit('xpGainedV2', { attribute: result.xp.code, amount: result.xp.xpGained });
         }
         
         res.json({ success: true, habits: updatedHabits });
