@@ -71,6 +71,10 @@
   .custom-scrollbar::-webkit-scrollbar { width: 8px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: #f1ede3; border-radius: 10px; }
   .custom-scrollbar::-webkit-scrollbar-thumb { background: #dcd7ca; border-radius: 10px; }
+  
+  /* Fix for Tailwind opacity modifier with CSS variables */
+  .bg-cozy-warm\/10 { background-color: color-mix(in srgb, var(--cozy-warm), transparent 90%); }
+  .bg-cozy-accent\/10 { background-color: color-mix(in srgb, var(--cozy-accent), transparent 90%); }
 }
 
 .animate-wiggle {

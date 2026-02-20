@@ -13,7 +13,7 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
 
 // Attach io to requests for route access
 app.use((req, res, next) => {
@@ -52,6 +52,8 @@ const habitRoutes = require('./src/routes/habits');
 const focusRoutes = require('./src/routes/focus');
 const taskRoutes = require('./src/routes/tasks');
 const bloodPressureRoutes = require('./src/routes/bloodPressure');
+const explorerRoutes = require('./src/routes/explorer');
+const insightRoutes = require('./src/routes/insights');
 
 // Mount API Routes
 app.use('/api', healthRoutes);
@@ -61,6 +63,8 @@ app.use('/api', habitRoutes);
 app.use('/api', focusRoutes);
 app.use('/api', taskRoutes);
 app.use('/api', bloodPressureRoutes);
+app.use('/api/explorer', explorerRoutes);
+app.use('/api/insights', insightRoutes);
 
 // Socket Connection
 io.on('connection', (socket) => {
@@ -68,9 +72,24 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => console.log('Dashboard client disconnected'));
 });
 
-// Serve index.html
+// Serve index.html - DISABLED (Use port 5173)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.send('Life Dashboard API is running. Access the UI at port 5173.');
+});
+
+// Serve raw DB file
+app.get('/life.db', (req, res) => {
+    const fs = require('fs');
+    const dbPath = path.join(__dirname, 'data', 'life.db');
+    
+    if (fs.existsSync(dbPath)) {
+        res.setHeader('Content-Type', 'application/x-sqlite3');
+        res.setHeader('Content-Disposition', 'attachment; filename="life.db"');
+        const stream = fs.createReadStream(dbPath);
+        stream.pipe(res);
+    } else {
+        res.status(404).send('Database file not found.');
+    }
 });
 
 // Start the app after DB is ready

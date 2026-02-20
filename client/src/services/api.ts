@@ -188,5 +188,24 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(session)
     });
+  },
+
+  // Explorer
+  getTables: async (): Promise<string[]> => {
+    const res = await fetch(`${API_BASE}/api/explorer/tables`);
+    if (!res.ok) throw new Error('Failed to fetch tables');
+    return res.json();
+  },
+
+  getTableData: async (tableName: string): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/api/explorer/table/${tableName}`);
+    if (!res.ok) throw new Error('Failed to fetch table data');
+    return res.json();
+  },
+
+  getInsights: async (): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/api/insights`);
+    if (!res.ok) throw new Error('Failed to fetch insights');
+    return res.json();
   }
 };

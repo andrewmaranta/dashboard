@@ -53,11 +53,11 @@ async function logEntry(type, data) {
                 break;
 
             case 'habit':
-                // data: { habit, date? } - habit names: 'Workout', 'Read20Min', etc.
+                // data: { habit, date? } - habit names: 'Workout', 'Read20Min', 'Medication', etc.
                 const habitDate = data.date || today;
                 await db.run(
-                    `INSERT OR REPLACE INTO habits_log (date, habit, completed) VALUES (?, ?, ?)`,
-                    [habitDate, data.habit, 1]
+                    `INSERT INTO habits_log (date, habit) VALUES (?, ?)`,
+                    [habitDate, data.habit]
                 );
                 console.log(`✅ Habit logged: ${data.habit}`);
                 break;
@@ -147,7 +147,9 @@ async function main() {
         console.log('  node log.js nutrition \'{"item":"Eggs","calories":300,"protein":20}\'');
         console.log('  node log.js nutrition \'{"template":"Good Protein Smoothie","item":"Morning shake"}\'');
         console.log('  node log.js nutrition \'{"template":"Canned Sockeye Salmon (213g can)"}\'');
+        console.log('  node log.js habit \'{"habit":"Medication"}\'');
         console.log('  node log.js habit \'{"habit":"Workout"}\'');
+        console.log('  node log.js habit \'{"habit":"Read20Min"}\'');
         console.log('  node log.js weight \'{"weight":210.5,"bodyFat":28}\'');
         console.log('  node log.js focus \'{"duration":45,"type":"work"}\'');
         console.log('  node log.js finance \'{"emergencyFund":7000}\'');
