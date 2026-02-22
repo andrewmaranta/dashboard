@@ -1,6 +1,7 @@
 const { DB_PATH } = require('../config');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3');
+const attributeService = require('./attributeService');
 
 let db;
 async function getDb() {
@@ -85,6 +86,9 @@ async function updateFinanceData(data) {
         data.targets?.diningLimit || data.target_dining_limit || 400,
         today
     ]);
+    
+    // Award 10 DSC XP for financial maintenance
+    await attributeService.addXP('DSC', 10);
     
     return { success: true };
 }

@@ -13,7 +13,12 @@ async function getDb() {
 
 async function getTasks() {
     const database = await getDb();
-    return await database.all('SELECT * FROM tasks ORDER BY created_at DESC');
+    return await database.all('SELECT * FROM tasks WHERE archived = 0 ORDER BY created_at DESC');
+}
+
+async function archiveCompleted() {
+    const database = await getDb();
+    return await database.run('UPDATE tasks SET archived = 1 WHERE completed = 1');
 }
 
 async function addTask(text, attribute) {
@@ -33,9 +38,11 @@ async function toggleTask(id) {
 
     // Toggle the task status
     const newStatus = task.completed === 0 ? 1 : 0;
+    const completedAt = newStatus === 1 ? new Date().toISOString() : null;
+    
     await database.run(
-        'UPDATE tasks SET completed = ? WHERE id = ?',
-        [newStatus, id]
+        'UPDATE tasks SET completed = ?, completed_at = ? WHERE id = ?',
+        [newStatus, completedAt, id]
     );
     
     // Handle XP
@@ -43,11 +50,11 @@ async function toggleTask(id) {
     if (task.attribute) {
         if (newStatus === 1) {
             // Completing: Award XP
-            xpResult = await attributeService.addXP(task.attribute, 20);
+            xpResult = await attributeService.addXP(task.attribute, 10);
             if (xpResult) xpResult.type = 'gained';
         } else {
             // Unchecking: Remove XP
-            xpResult = await attributeService.removeXP(task.attribute, 20);
+            xpResult = await attributeService.removeXP(task.attribute, 10);
             if (xpResult) xpResult.type = 'removed';
         }
     }
@@ -63,5 +70,6 @@ module.exports = {
     getTasks,
     addTask,
     toggleTask,
-    deleteTask
+    deleteTask,
+    archiveCompleted
 };

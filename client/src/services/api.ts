@@ -97,6 +97,13 @@ export const api = {
     await fetch(`${API_BASE}/api/tasks/${id}`, { method: 'DELETE' });
   },
 
+  archiveCompleted: async (): Promise<void> => {
+    await fetch(`${API_BASE}/api/tasks/archive-completed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+  },
+
   // Health
   getHealth: async (): Promise<HealthStat[]> => {
     const res = await fetch(`${API_BASE}/api/health`);

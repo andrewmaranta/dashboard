@@ -131,7 +131,7 @@ cd health_dashboard && nohup node server.js > output.log 2>&1 &
 **Location:** `health_dashboard/src/routes/tasks.js`, `taskService.js`, `attributeService.js`
 
 **How it works:**
-- Tasks can have an optional attribute tag (PWR, AGI, VIT, KNW, WEL, SOC)
+- Tasks can have an optional attribute tag (PWR, DSC, VIT, KNW, WEL, SOC)
 - Completing a task awards +20 XP to that attribute
 - Attributes level up when XP exceeds xp_max (10% increase each level)
 

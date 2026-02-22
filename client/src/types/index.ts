@@ -47,7 +47,7 @@ export interface FinanceData {
 }
 
 export interface AttributeStat {
-  code: string; // 'PWR', 'AGI', etc.
+  code: string; // 'PWR', 'DSC', etc.
   name?: string;
   score: number;
   xp: number;

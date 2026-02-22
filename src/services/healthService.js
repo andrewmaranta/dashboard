@@ -1,6 +1,7 @@
 const { DB_PATH } = require('../config');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3');
+const attributeService = require('./attributeService');
 
 let db;
 async function getDb() {
@@ -184,6 +185,10 @@ async function updateDailyStats(stats) {
          VALUES (?, ?, ?, ?)`,
         [today, 'Dashboard-Summary', stats.calories||0, stats.protein||0]
     );
+    
+    // Award 10 VIT XP for nutrition logging
+    await attributeService.addXP('VIT', 10);
+    
     return true;
 }
 
@@ -206,6 +211,7 @@ async function updateHealthStats(weight, bodyFat) {
             [today, weight, bodyFat]
         );
     }
+    await attributeService.addXP('VIT', 10);
     return true;
 }
 
@@ -231,6 +237,7 @@ async function updateSleep(hours, quality, notes = '') {
             [today, hours, quality, notes]
         );
     }
+    await attributeService.addXP('WEL', 10);
     return true;
 }
 

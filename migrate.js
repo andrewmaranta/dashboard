@@ -69,7 +69,7 @@ async function migrate() {
     const attrs = await db.get('SELECT COUNT(*) as count FROM attributes');
     if (attrs.count === 0) {
         const defaults = [
-            ['PWR', 'Power'], ['AGI', 'Agility'], ['VIT', 'Vitality'],
+            ['PWR', 'Power'], ['DSC', 'Discipline'], ['VIT', 'Vitality'],
             ['KNW', 'Knowledge'], ['WEL', 'Wellness'], ['SOC', 'Social']
         ];
         for (const [code, name] of defaults) {

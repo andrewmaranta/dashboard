@@ -26,6 +26,18 @@ router.post('/tasks', async (req, res) => {
     }
 });
 
+router.post('/tasks/archive-completed', async (req, res) => {
+    try {
+        await taskService.archiveCompleted();
+        const tasks = await taskService.getTasks();
+        req.io.emit('tasksUpdated', tasks);
+        res.json(tasks);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to archive tasks' });
+    }
+});
+
 router.post('/tasks/toggle', async (req, res) => {
     try {
         const { id } = req.body;

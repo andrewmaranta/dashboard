@@ -7,7 +7,7 @@
 | Code | Name | Score | Progress |
 |------|------|-------|----------|
 | PWR | Power | 10 | 0 / 100 |
-| AGI | Agility | 10 | 0 / 100 |
+| DSC | Discipline | 10 | 0 / 100 |
 | VIT | Vitality | 10 | 0 / 100 |
 | KNW | Knowledge | 10 | 19 / 100 |
 | WEL | Wellness | 10 | 0 / 100 |
@@ -29,24 +29,24 @@ Build functional strength through consistent training.
 
 ---
 
-### Body Composition (AGI)
+### Body Composition (VIT)
 Reduce body fat to improve health and energy.
 
 **Milestones:**
-- [ ] 25% Body Fat (+100 AGI points)
-- [ ] 20% Body Fat (+150 AGI points)
-- [ ] 16% Body Fat (+250 AGI points)
+- [ ] 25% Body Fat (+100 VIT points)
+- [ ] 20% Body Fat (+150 VIT points)
+- [ ] 16% Body Fat (+250 VIT points)
 
 **Requirements:** ≤1800 calories daily
 
 ---
 
-### Financial Security (VIT)
+### Financial Security (DSC)
 Build emergency fund and cash buffer for stability.
 
 **Milestones:**
-- [ ] $5,000 Cash Buffer (+75 VIT points)
-- [ ] $10,000 Emergency Fund (+100 VIT points)
+- [ ] $5,000 Cash Buffer (+75 DSC points)
+- [ ] $10,000 Emergency Fund (+100 DSC points)
 
 **Requirements:** Consistent savings rate
 
@@ -87,13 +87,13 @@ Build meaningful relationships and community.
 
 ## Daily Habits
 
-- [ ] **Calories** — Stay under 1800 kcal (AGI)
+- [ ] **Calories** — Stay under 1800 kcal (VIT)
 - [ ] **Protein** — Hit 150g minimum (PWR)
 - [ ] **Reading** — 20 minutes minimum (KNW)
 - [ ] **Screen Time** — Off by 10 PM (WEL)
 - [ ] **Social** — One meaningful interaction (SOC)
-- [ ] **Dashboard** — Log and review (KNW)
+- [ ] **Dashboard** — Log and review (DSC)
 
 ---
 
-*Last updated: 2026-02-17*
+*Last updated: 2026-02-21*

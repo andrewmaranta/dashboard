@@ -28,10 +28,11 @@ export const useDashboardData = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [dailyStats, setDailyStats] = useState<any>(null); // For streaks, etc.
   const [heatmap, setHeatmap] = useState<any[]>([]);
+  const [xpNotifications, setXpNotifications] = useState<{ id: string, amount: number, attribute: string }[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       const [questsData, tasksData, healthData, financeRes, campaignsRes, dailyStatsRes, heatmapRes] = await Promise.all([
         api.getQuests(),
         api.getTasks(),
@@ -55,15 +56,15 @@ export const useDashboardData = () => {
       const habitsRes = await api.getHabits(today);
       setHabits(habitsRes);
 
-      setLoading(false);
+      if (isInitial) setLoading(false);
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
 
     // Socket Listeners
     socket.on('habitUpdated', () => fetchData());
@@ -74,6 +75,7 @@ export const useDashboardData = () => {
     socket.on('xpGainedV2', (data: { amount: number, attribute: string }) => {
       // Show notification if implementing notifications
       console.log(`XP Gained: +${data.amount} ${data.attribute}`);
+      setXpNotifications(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), ...data }]);
       fetchData(); // Refresh attributes
     });
 
@@ -87,6 +89,10 @@ export const useDashboardData = () => {
     };
   }, []);
 
+  const removeXpNotification = (id: string) => {
+    setXpNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
   return {
     loading,
     profile,
@@ -98,6 +104,8 @@ export const useDashboardData = () => {
     campaigns,
     dailyStats,
     heatmap,
+    xpNotifications,
+    removeXpNotification,
     refetch: fetchData
   };
 };

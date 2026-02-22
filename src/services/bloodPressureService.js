@@ -1,6 +1,7 @@
 const { DB_PATH } = require('../config');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3');
+const attributeService = require('./attributeService');
 
 let db;
 async function getDb() {
@@ -49,6 +50,7 @@ async function logBloodPressure(data) {
          VALUES (?, ?, ?, ?, ?, ?)`,
         [data.date || today, data.time || time, data.systolic, data.diastolic, data.pulse, data.notes || '']
     );
+    await attributeService.addXP('VIT', 10);
     
     return { success: true };
 }
