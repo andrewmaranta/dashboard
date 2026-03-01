@@ -1,7 +1,7 @@
 const { DB_PATH } = require('../config');
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3');
-const { isDateConsecutive } = require('../utils/dateUtils');
+const { isDateConsecutive, getDateDiff } = require('../utils/dateUtils');
 const attributeService = require('./attributeService');
 
 let db;
@@ -15,9 +15,8 @@ async function getDb() {
 const habitMapping = {
     'Workout': 'workout',
     'workout': 'workout',
-    'Read20Min': 'read20Min',
-    'read20Min': 'read20Min',
-    "The Reader's Vow": 'read20Min',
+    'Yoga': 'yoga',
+    'yoga': 'yoga',
     'DigitalSunset': 'digitalSunset',
     'digitalSunset': 'digitalSunset',
     'Off screens 10pm': 'digitalSunset',
@@ -31,7 +30,7 @@ const habitMapping = {
 
 const habitAttributes = {
     'workout': 'PWR',
-    'read20Min': 'KNW',
+    'yoga': 'VIT',
     'digitalSunset': 'WEL',
     'socialInteraction': 'SOC',
     'medication': 'VIT'
@@ -39,7 +38,7 @@ const habitAttributes = {
 
 const reverseHabitMapping = {
     'workout': 'Workout',
-    'read20Min': "The Reader's Vow",
+    'yoga': 'Yoga',
     'digitalSunset': 'Off screens 10pm',
     'socialInteraction': "Stranger's Greeting",
     'medication': 'The Vital Dose'
@@ -68,7 +67,7 @@ async function getTodayHabits(requestedDate) {
     
     const status = {
         workout: false,
-        read20Min: false,
+        yoga: false,
         digitalSunset: false,
         socialInteraction: false,
         medication: false,
@@ -108,7 +107,7 @@ async function getWeeklyHabits() {
     
     return [
         { name: 'Workout', count: counts['workout'] || 0, target: 3 },
-        { name: 'Read20Min', count: counts['read20Min'] || 0, target: 7 },
+        { name: 'Yoga', count: counts['yoga'] || 0, target: 5 },
         { name: 'DigitalSunset', count: counts['digitalSunset'] || 0, target: 7 },
         { name: 'SocialInteraction', count: counts['socialInteraction'] || 0, target: 7 },
         { name: 'Medication', count: counts['medication'] || 0, target: 7 }
@@ -129,24 +128,60 @@ async function getHabitStreaks() {
     
     const localNow = new Date();
     const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-    const yesterdayDate = new Date(localNow.getTime() - 86400000);
-    const yesterday = new Date(yesterdayDate.getTime() - (yesterdayDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
     return Object.keys(reverseHabitMapping).map(id => {
         const dates = habitsByDate.get(id) || [];
         let streak = 0;
-        if (dates.length > 0 && (dates[0] === today || dates[0] === yesterday)) {
-            streak = 1;
-            for (let i = 1; i < dates.length; i++) {
-                if (isDateConsecutive(dates[i-1], dates[i])) streak++;
-                else break;
+        let active = false;
+        let safetyUsed = false;
+        
+        if (dates.length > 0) {
+            const lastDate = dates[0];
+            const diffFromToday = getDateDiff(today, lastDate);
+            
+            // Streak is alive if last completion was <= 2 days ago (allowing 1 miss)
+            // 0 = Today, 1 = Yesterday, 2 = Day Before Yesterday
+            if (diffFromToday <= 2) {
+                active = true;
+                streak = 1;
+                
+                // Determine Safety Shield Status (for current day display)
+                if (diffFromToday === 2) {
+                    // Missed yesterday, so we are relying on safety day right now
+                    safetyUsed = true;
+                }
+
+                // Calculate Streak Count
+                let current = lastDate;
+                
+                for (let i = 1; i < dates.length; i++) {
+                    const diff = getDateDiff(current, dates[i]);
+                    if (diff === 1) {
+                        streak++;
+                        current = dates[i];
+                    } else if (diff === 2) {
+                        // Gap of 1 day found in history. Consumed a safety day.
+                        // Continue streak count across the gap
+                        streak++;
+                        current = dates[i];
+                    } else {
+                        break;
+                    }
+                }
             }
         }
-        return { name: reverseHabitMapping[id].split('(')[0].trim(), id, streak };
+        
+        return { 
+            name: reverseHabitMapping[id].split('(')[0].trim(), 
+            id, 
+            streak,
+            active, 
+            safetyUsed
+        };
     });
 }
 
-async function toggleHabit(habitName, requestedDate, note) {
+async function toggleHabit(habitName, requestedDate, note, io = null) {
     const localNow = new Date();
     const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const dateToToggle = requestedDate || today;
@@ -181,7 +216,7 @@ async function toggleHabit(habitName, requestedDate, note) {
         const normalized = habitMapping[targetHabit] || targetHabit;
         const attrCode = habitAttributes[normalized];
         if (attrCode) {
-            xpResult = await attributeService.addXP(attrCode, 10);
+            xpResult = await attributeService.addXP(attrCode, 10, io);
             xpResult.type = 'gained';
         }
     }

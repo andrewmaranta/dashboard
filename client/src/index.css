@@ -16,6 +16,8 @@
   --cozy-warm: #d68060; /* Terracotta */
   --cozy-gold: #e9c46a;
   --cozy-border: #e2ddd2;
+  --heatmap-empty: #f1ede3;
+  --heatmap-partial: #e2ddd2;
 }
 
 .dark {
@@ -26,12 +28,14 @@
   --cozy-text-dark: #eceef2;
   --cozy-text-muted: #909296;
   --cozy-text-dim: #5c5f66;
-  --cozy-accent: #8da08e;
-  --cozy-accent-dark: #4b5a4c;
-  --cozy-accent-soft: #3b4b3c;
-  --cozy-warm: #e8590c;
-  --cozy-gold: #fcc419;
+  --cozy-accent: #65a375; /* Cozier, slightly muted pine green */
+  --cozy-accent-dark: #4b7d56;
+  --cozy-accent-soft: #2a4030;
+  --cozy-warm: #d97746; /* Softer terracotta/orange */
+  --cozy-gold: #dcb346;
   --cozy-border: #373a40;
+  --heatmap-empty: #23252a; /* Slightly warmer dark grey */
+  --heatmap-partial: #363940;
 }
 
 @layer base {
@@ -63,6 +67,9 @@
   }
   .cozy-button {
     @apply bg-[var(--cozy-accent)] text-white font-bold px-6 py-3 rounded-2xl shadow-[0_4px_0_0_#6e7f6f] active:shadow-none active:translate-y-1 transition-all;
+  }
+  .cozy-tag {
+    @apply font-mono px-2.5 py-0.5 tracking-tighter transition-all rounded-full border-0;
   }
 }
 

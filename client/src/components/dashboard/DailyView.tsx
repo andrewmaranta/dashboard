@@ -3,6 +3,7 @@ import { api } from '@/services/api';
 import { DailyHabits } from '@/types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addDays, addWeeks } from 'date-fns';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 const M = (emoji: string) => `${emoji}\uFE0E`;
 
@@ -15,16 +16,25 @@ interface DailyViewProps {
 }
 
 const HABIT_METADATA: Record<string, { label: string, icon: string, color: string, xpType: string, xpAmount: number }> = {
-  workout: { label: 'Training', icon: M('🌿'), color: 'text-emerald-500', xpType: 'PWR', xpAmount: 10 },
-  read20Min: { label: 'Reading', icon: M('📖'), color: 'text-orange-400', xpType: 'KNW', xpAmount: 10 },
+  workout: { label: 'Training', icon: M('🏋'), color: 'text-emerald-500', xpType: 'PWR', xpAmount: 10 },
+  yoga: { label: 'Yoga', icon: M('🧘'), color: 'text-rose-400', xpType: 'VIT', xpAmount: 10 },
   digitalSunset: { label: 'Sunset', icon: M('🌙'), color: 'text-indigo-400', xpType: 'WEL', xpAmount: 10 },
   socialInteraction: { label: 'Social', icon: M('🤝'), color: 'text-pink-400', xpType: 'SOC', xpAmount: 10 },
   medication: { label: 'Health', icon: M('💊'), color: 'text-cyan-400', xpType: 'VIT', xpAmount: 10 }
 };
 
+const ATTR_COLORS: Record<string, string> = {
+  PWR: 'bg-[#d68060]/10 text-[#d68060]', // Terracotta
+  DSC: 'bg-[#e9c46a]/15 text-[#c7a24b]', // Gold
+  VIT: 'bg-[#fb7185]/10 text-[#e11d48]', // Rose
+  KNW: 'bg-[#818cf8]/10 text-[#4f46e5]', // Indigo
+  WEL: 'bg-[#8da08e]/20 text-[#6e7f6f]', // Sage
+  SOC: 'bg-[#fbbf24]/10 text-[#b45309]', // Amber
+};
+
 const HEATMAP_ROWS = [
   { key: 'workout', label: 'Workout' },
-  { key: 'reading', label: 'Reading' },
+  { key: 'yoga', label: 'Yoga' },
   { key: 'digitalSunset', label: 'Sunset' },
   { key: 'social', label: 'Social' },
   { key: 'medication', label: 'Med' },
@@ -38,6 +48,7 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
   
   const [ritualDate, setRitualDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [heatmapDate, setHeatmapDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const { isDark } = useDarkMode();
 
   useEffect(() => {
     const fetchHabits = async () => {
@@ -122,16 +133,20 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
     setHeatmapDate(format(addWeeks(d, delta), 'yyyy-MM-dd'));
   };
 
-  const getCellColor = (value: number) => {
-    // 0 = empty/fail
-    // 0.5 = partial (for nutrition)
-    // >= 1 = streak count
+  const getCellColor = (rawValue: number, isToday: boolean = false) => {
+    // 0 = empty/fail, 0.5 = partial
+    // Negative values = Safety Day (use absolute for color calculation)
     
-    if (value === 0) return '#f1ede3'; 
-    if (value === 0.5) return '#e2ddd2'; 
+    // Safety Day logic: If it's today and not done yet (0 or negative), show as empty to create urgency
+    if (isToday && rawValue <= 0) return 'var(--heatmap-empty)';
+    
+    const value = Math.abs(rawValue);
+    
+    if (value === 0) return 'var(--heatmap-empty)'; 
+    if (value === 0.5) return 'var(--heatmap-partial)'; 
     
     // Color points for every 10 days
-    const colorPoints = [
+    const colorPointsLight = [
       { r: 141, g: 160, b: 142 }, // 0-10: Sage Green (#8da08e)
       { r: 214, g: 128, b: 96 },  // 10: Terracotta (#d68060)
       { r: 233, g: 196, b: 106 }, // 20: Gold (#e9c46a)
@@ -139,6 +154,17 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
       { r: 251, g: 113, b: 133 }, // 40: Rose (#fb7185)
       { r: 20, g: 184, b: 166 }   // 50+: Teal (#14b8a6)
     ];
+
+    const colorPointsDark = [
+      { r: 101, g: 163, b: 117 }, // 0-10: Pine Green (#65a375) - Cozy, muted
+      { r: 217, g: 119, b: 70 },  // 10: Warm Rust (#d97746)
+      { r: 220, g: 179, b: 70 },  // 20: Muted Gold (#dcb346)
+      { r: 143, g: 149, b: 211 }, // 30: Soft Indigo (#8f95d3)
+      { r: 219, g: 112, b: 147 }, // 40: Muted Rose (#db7093)
+      { r: 72, g: 165, b: 163 }   // 50+: Muted Teal (#48a5a3)
+    ];
+
+    const colorPoints = isDark ? colorPointsDark : colorPointsLight;
 
     // Determine which 10-day bracket we are in (0-4)
     const bracket = Math.min(Math.floor((value - 1) / 10), colorPoints.length - 2);
@@ -156,6 +182,13 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
     
     return `rgb(${r}, ${g}, ${b})`;
   };
+
+  const getTodayStr = () => {
+    const localNow = new Date();
+    return format(localNow, 'yyyy-MM-dd');
+  };
+
+  const todayStr = getTodayStr();
 
   return (
     <div className="space-y-6 sm:space-y-10 animate-pop">
@@ -197,24 +230,30 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
               {HEATMAP_ROWS.map(row => (
                 <div key={row.key} className="flex items-center">
                   <div className="w-20 sm:w-24 text-[10px] sm:text-xs font-bold text-cozy-text-muted">{row.label}</div>
-                  {heatmap && heatmap.length > 0 ? heatmap.map((dayData, idx) => (
-                    <div key={idx} className="flex-1 flex justify-center p-0.5 sm:p-1 group relative">
-                      <div 
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl transition-all duration-500 border-2 border-cozy-border/30" 
-                        style={{ backgroundColor: getCellColor(dayData[row.key] || 0) }}
-                      />
-                      
-                      {/* Tooltip for Workout Notes */}
-                      {row.key === 'workout' && dayData.streaks?.workoutNote && (
-                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
-                          <div className="bg-cozy-text-dark text-cozy-bg px-3 py-1.5 rounded-xl text-xs font-bold shadow-xl border border-cozy-border">
-                            {dayData.streaks.workoutNote}
-                          </div>
-                          <div className="w-2 h-2 bg-cozy-text-dark rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+                  {heatmap && heatmap.length > 0 ? heatmap.map((dayData, idx) => {
+                    const isToday = dayData.date === todayStr;
+                    const isPast = dayData.date < todayStr;
+                    return (
+                      <div key={idx} className="flex-1 flex justify-center p-0.5 sm:p-1 group relative">
+                        <div 
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl transition-all duration-500 border-2 border-cozy-border/30 flex items-center justify-center" 
+                          style={{ backgroundColor: getCellColor(dayData[row.key] || 0, isToday) }}
+                        >
+                          {dayData[row.key] < 0 && isPast && <span className="noto-emoji text-lg sm:text-xl drop-shadow-md">🛡</span>}
                         </div>
-                      )}
-                    </div>
-                  )) : <div className="flex-1 text-center text-cozy-border italic text-xs">Waiting for data...</div>}
+                        
+                        {/* Tooltip for Workout Notes */}
+                        {row.key === 'workout' && dayData.streaks?.workoutNote && (
+                          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+                            <div className="bg-cozy-text-dark text-cozy-bg px-3 py-1.5 rounded-xl text-xs font-bold shadow-xl border border-cozy-border">
+                              {dayData.streaks.workoutNote}
+                            </div>
+                            <div className="w-2 h-2 bg-cozy-text-dark rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }) : <div className="flex-1 text-center text-cozy-border italic text-xs">Waiting for data...</div>}
                 </div>
               ))}
             </div>
@@ -224,7 +263,6 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
         {/* Habits Checklist */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-cozy-accent p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] text-white shadow-[0_10px_0_0_var(--cozy-accent-dark)] mb-6 sm:mb-8 relative overflow-hidden">
-            <span className="noto-emoji absolute -top-4 -right-4 opacity-20 rotate-12 text-7xl sm:text-9xl animate-float">{M('📅')}</span>
             <div className="flex justify-between items-start relative z-10">
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold flex items-center gap-3 mb-1">
@@ -232,7 +270,7 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
                    Daily Rituals
                 </h3>
                 <p className="text-cozy-bg-alt text-[10px] sm:text-sm font-bold opacity-80 uppercase tracking-widest">
-                  {ritualDate === new Date().toISOString().split('T')[0] ? 'Today' : format(new Date(ritualDate + 'T12:00:00'), 'EEEE')}
+                  {ritualDate === getTodayStr() ? 'Today' : format(new Date(ritualDate + 'T12:00:00'), 'EEEE')}
                 </p>
               </div>
               
@@ -276,7 +314,9 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
                     </div>
                     <div className="flex flex-col items-start">
                       <span className={`font-bold text-base sm:text-lg ${isDone ? 'text-cozy-text' : 'text-cozy-text-muted'}`}>{displayLabel}</span>
-                      <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-cozy-accent/10 text-cozy-accent border border-cozy-accent/20 uppercase tracking-widest mt-1">
+                      <span className={`text-[10px] sm:text-[11px] cozy-tag uppercase leading-none mt-1 ${
+                        ATTR_COLORS[meta.xpType] || 'bg-cozy-accent/10 text-cozy-accent'
+                      }`}>
                         +{meta.xpAmount} {meta.xpType}
                       </span>
                     </div>

@@ -2,7 +2,7 @@ export interface DailyHabits {
   _date: string;
   workout: boolean;
   workoutType?: string;
-  read20Min: boolean;
+  yoga: boolean;
   digitalSunset: boolean;
   socialInteraction: boolean;
   medication: boolean;
@@ -15,6 +15,32 @@ export interface Task {
   completed: boolean;
   attribute?: string;
   created_at?: string;
+  difficulty?: string;
+  if_then?: string;
+  belief_id?: number;
+  steps?: { text: string; completed: boolean; distress: number }[];
+}
+
+export interface TaskTemplate {
+  id: number;
+  text: string;
+  attribute?: string;
+  difficulty?: string;
+  if_then?: string;
+  belief_id?: number;
+  steps?: { text: string; completed: boolean; distress: number }[];
+  created_at?: string;
+}
+
+export interface Belief {
+  id: number;
+  text: string;
+  attribute_code?: string;
+  confidence: number;
+  initial_confidence?: number;
+  created_at: string;
+  evidence_count?: number;
+  evidence?: { id: number; text: string; created_at: string; type: 'task' | 'manual' | 'habit' | 'metric' }[];
 }
 
 export interface HealthStat {
@@ -39,6 +65,10 @@ export interface FinanceData {
   income: string;
   burnRate: string;
   savingsRate: string;
+  fixedCosts?: string;
+  monthlySurplus?: string;
+  netWorthChangePct?: number;
+  notes?: string;
   targets?: {
     emergencyFund: number;
     cashBuffer: number;
@@ -77,6 +107,16 @@ export interface FocusSession {
   duration: number;
 }
 
+export interface PomodoroState {
+  timeLeft: number;
+  isRunning: boolean;
+  mode: 'work' | 'break';
+  workDuration: number;
+  breakDuration: number;
+  breaksEarned: number;
+  lastTick?: string;
+}
+
 export interface BloodPressureReading {
   id?: number;
   date: string;
@@ -106,6 +146,14 @@ export interface SleepEntry {
   notes?: string;
 }
 
+export interface HabitStreak {
+  id: string;
+  name: string;
+  streak: number;
+  active: boolean;
+  safetyUsed: boolean;
+}
+
 export interface UserProfile {
   name: string;
   class: string;
@@ -121,7 +169,7 @@ export interface DashboardData {
     calories: number;
     protein: number;
     fiber: number;
-    habitStreaks?: { name: string; streak: number }[];
+    habitStreaks?: HabitStreak[];
     [key: string]: any;
   };
   finance: FinanceData;

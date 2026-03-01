@@ -3,6 +3,27 @@ const router = express.Router();
 const healthService = require('../services/healthService');
 const habitService = require('../services/habitService');
 
+router.get('/targets', async (req, res) => {
+    try {
+        const targets = await healthService.getTargets();
+        res.json(targets);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch targets' });
+    }
+});
+
+router.post('/targets', async (req, res) => {
+    try {
+        const updated = await healthService.updateTargets(req.body);
+        req.io.emit('targetsUpdated', updated);
+        res.json(updated);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update targets' });
+    }
+});
+
 router.get('/daily-stats', async (req, res) => {
     try {
         const date = req.query.date;

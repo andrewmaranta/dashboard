@@ -25,7 +25,7 @@ Build functional strength through consistent training.
 - [ ] Squat 315 lb (+150 PWR points)
 - [ ] Deadlift 405 lb (+200 PWR points)
 
-**Requirements:** 3x workouts/week, ≥150g protein daily
+**Requirements:** 3x workouts/week, ≥120g protein daily
 
 ---
 
@@ -37,7 +37,7 @@ Reduce body fat to improve health and energy.
 - [ ] 20% Body Fat (+150 VIT points)
 - [ ] 16% Body Fat (+250 VIT points)
 
-**Requirements:** ≤1800 calories daily
+**Requirements:** ≤1500 calories daily
 
 ---
 
@@ -87,8 +87,8 @@ Build meaningful relationships and community.
 
 ## Daily Habits
 
-- [ ] **Calories** — Stay under 1800 kcal (VIT)
-- [ ] **Protein** — Hit 150g minimum (PWR)
+- [ ] **Calories** — Stay under 1500 kcal (VIT)
+- [ ] **Protein** — Hit 120g minimum (PWR)
 - [ ] **Reading** — 20 minutes minimum (KNW)
 - [ ] **Screen Time** — Off by 10 PM (WEL)
 - [ ] **Social** — One meaningful interaction (SOC)

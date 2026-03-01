@@ -6,7 +6,7 @@ import { FocusSession } from '@/types';
 const M = (emoji: string) => `${emoji}\uFE0E`;
 
 export const FocusView: React.FC = () => {
-  const { state, toggleTimer, resetTimer, setDuration, takeBreak } = usePomodoro();
+  const { state, loading, toggleTimer, resetTimer, setDuration, takeBreak, returnToWork } = usePomodoro();
   const [history, setHistory] = useState<FocusSession[]>([]);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -14,11 +14,26 @@ export const FocusView: React.FC = () => {
     const fetchHistory = async () => {
       const end = new Date().toISOString();
       const start = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const data = await api.getFocusHistory(start, end);
-      setHistory(data);
+      try {
+        const data = await api.getFocusHistory(start, end);
+        setHistory(data);
+      } catch (err) {
+        console.error('Failed to fetch focus history:', err);
+      }
     };
-    fetchHistory();
-  }, [state.isRunning]);
+    if (!loading) {
+      fetchHistory();
+    }
+  }, [state.isRunning, loading]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-12 h-12 border-4 border-cozy-accent border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-cozy-text-dim font-bold animate-pulse uppercase tracking-widest text-xs">Loading Focus State...</p>
+      </div>
+    );
+  }
 
   const minutes = Math.floor(state.timeLeft / 60);
   const seconds = state.timeLeft % 60;
@@ -35,7 +50,7 @@ export const FocusView: React.FC = () => {
             <div className="flex flex-col items-start">
               <span>{state.mode === 'work' ? 'Time to Focus' : 'Tea Break'}</span>
               {state.mode === 'work' && (
-                <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-cozy-accent/10 text-cozy-accent border border-cozy-accent/20 uppercase tracking-widest mt-1">
+                <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-400/10 text-indigo-400 border border-indigo-400/20 uppercase tracking-widest mt-1">
                   +15 KNW
                 </span>
               )}
@@ -99,8 +114,8 @@ export const FocusView: React.FC = () => {
                 <label className="text-xs sm:text-sm font-bold text-cozy-text-muted uppercase">Work (min)</label>
                 <input 
                   type="number" 
-                  defaultValue={state.workDuration / 60} 
-                  onChange={(e) => setDuration('work', parseInt(e.target.value) || 25)}
+                  value={state.workDuration / 60} 
+                  onChange={(e) => setDuration('work', parseInt(e.target.value) || 0)}
                   className="bg-cozy-panel border-2 border-cozy-border rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 w-16 sm:w-20 text-center text-cozy-accent font-bold text-sm sm:text-base"
                 />
               </div>
@@ -108,8 +123,8 @@ export const FocusView: React.FC = () => {
                 <label className="text-xs sm:text-sm font-bold text-cozy-text-muted uppercase">Break (min)</label>
                 <input 
                   type="number" 
-                  defaultValue={state.breakDuration / 60}
-                  onChange={(e) => setDuration('break', parseInt(e.target.value) || 5)}
+                  value={state.breakDuration / 60}
+                  onChange={(e) => setDuration('break', parseInt(e.target.value) || 0)}
                   className="bg-cozy-panel border-2 border-cozy-border rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 w-16 sm:w-20 text-center text-cozy-warm font-bold text-sm sm:text-base"
                 />
               </div>
@@ -127,22 +142,24 @@ export const FocusView: React.FC = () => {
             </h3>
             <div className="flex flex-wrap gap-2 min-h-[48px] sm:min-h-[64px] p-3 sm:p-4 bg-cozy-bg-alt rounded-2xl sm:rounded-3xl mb-6 sm:mb-8 border-2 border-dashed border-cozy-border items-center">
               {state.breaksEarned > 0 ? Array.from({ length: state.breaksEarned }).map((_, i) => (
-                <span key={i} className="noto-emoji text-2xl sm:text-3xl animate-bounce" style={{ animationDelay: `${i * 0.1}s` }}>{M('🍵')}</span>
+                <span key={i} className="noto-emoji text-2xl sm:text-3xl">{M('🍵')}</span>
               )) : (
                 <span className="text-cozy-text-dim italic text-xs sm:text-sm font-bold flex items-center gap-2 px-2 sm:px-4 py-1 sm:py-2">No breaks earned</span>
               )}
             </div>
             <button 
-              onClick={takeBreak}
-              disabled={state.breaksEarned === 0 || state.mode === 'break'}
+              onClick={state.mode === 'work' ? takeBreak : returnToWork}
+              disabled={state.mode === 'work' && state.breaksEarned === 0}
               className={`w-full py-4 sm:py-6 rounded-xl sm:rounded-2xl font-bold transition-all flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg ${
-                state.breaksEarned > 0 && state.mode !== 'break'
+                state.mode === 'break'
+                  ? 'bg-cozy-accent text-white shadow-[0_4px_0_0_var(--cozy-accent-dark)] sm:shadow-[0_6px_0_0_var(--cozy-accent-dark)] hover:opacity-90 active:shadow-none active:translate-y-1'
+                  : state.breaksEarned > 0
                   ? 'bg-cozy-warm text-white shadow-[0_4px_0_0_var(--cozy-accent-dark)] sm:shadow-[0_6px_0_0_var(--cozy-accent-dark)] hover:opacity-90 active:shadow-none active:translate-y-1'
                   : 'bg-cozy-bg-alt text-cozy-text-dim cursor-not-allowed border-2 border-cozy-border'
               }`}
             >
-              <span className="noto-emoji text-xl sm:text-2xl">{M('🍵')}</span>
-              Have a Break
+              <span className="noto-emoji text-xl sm:text-2xl">{state.mode === 'work' ? M('🍵') : M('⏳')}</span>
+              {state.mode === 'work' ? 'Have a Break' : 'Return to Work'}
             </button>
           </div>
 

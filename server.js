@@ -13,38 +13,13 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
-// app.use(express.static(path.join(__dirname, 'public')));
 
-// Attach io to requests for route access
 app.use((req, res, next) => {
     req.io = io;
     next();
 });
 
-// Debug Route
-app.post('/api/echo', (req, res) => {
-    console.error('Echo body:', req.body);
-    res.json(req.body);
-});
-
-app.get('/api/debug/db', async (req, res) => {
-    try {
-        const { open } = require('sqlite');
-        const sqlite3 = require('sqlite3');
-        const { DB_PATH } = require('./src/config');
-        const db = await open({ filename: DB_PATH, driver: sqlite3.Database });
-        const nutrition = await db.get('SELECT COUNT(*) as count FROM nutrition_log');
-        const habits = await db.get('SELECT COUNT(*) as count FROM habits_log');
-        const weight = await db.get('SELECT COUNT(*) as count FROM weight_history');
-        const latestWeight = await db.get('SELECT * FROM weight_history ORDER BY date DESC LIMIT 1');
-        await db.close();
-        res.json({ nutrition, habits, weight, latestWeight });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// Import Routes
+// --- API ROUTES ---
 const healthRoutes = require('./src/routes/health');
 const questRoutes = require('./src/routes/quests');
 const financeRoutes = require('./src/routes/finance');
@@ -54,8 +29,11 @@ const taskRoutes = require('./src/routes/tasks');
 const bloodPressureRoutes = require('./src/routes/bloodPressure');
 const explorerRoutes = require('./src/routes/explorer');
 const insightRoutes = require('./src/routes/insights');
+const blueprintRoutes = require('./src/routes/blueprint');
+const beliefRoutes = require('./src/routes/beliefs');
+const protocolRoutes = require('./src/routes/protocols');
+const savoringRoutes = require('./src/routes/savoring');
 
-// Mount API Routes
 app.use('/api', healthRoutes);
 app.use('/api', questRoutes);
 app.use('/api', financeRoutes);
@@ -65,37 +43,31 @@ app.use('/api', taskRoutes);
 app.use('/api', bloodPressureRoutes);
 app.use('/api/explorer', explorerRoutes);
 app.use('/api/insights', insightRoutes);
+app.use('/api/blueprint', blueprintRoutes);
+app.use('/api', beliefRoutes);
+app.use('/api', protocolRoutes);
+app.use('/api', savoringRoutes);
 
-// Socket Connection
-io.on('connection', (socket) => {
-    console.log('Dashboard client connected');
-    socket.on('disconnect', () => console.log('Dashboard client disconnected'));
+// --- STATIC FILES ---
+app.use(express.static(path.join(__dirname, 'client/dist')));
+
+// --- SPA CATCH-ALL (Middleware style to avoid wildcard errors) ---
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, 'client/dist', 'index.html'));
 });
 
-// Serve index.html - DISABLED (Use port 5173)
-app.get('/', (req, res) => {
-    res.send('Life Dashboard API is running. Access the UI at port 5173.');
-});
-
-// Serve raw DB file
-app.get('/life.db', (req, res) => {
-    const fs = require('fs');
-    const dbPath = path.join(__dirname, 'data', 'life.db');
-    
-    if (fs.existsSync(dbPath)) {
-        res.setHeader('Content-Type', 'application/x-sqlite3');
-        res.setHeader('Content-Disposition', 'attachment; filename="life.db"');
-        const stream = fs.createReadStream(dbPath);
-        stream.pipe(res);
-    } else {
-        res.status(404).send('Database file not found.');
-    }
-});
-
-// Start the app after DB is ready
+// --- START SERVER ---
 const focusService = require('./src/services/focusService');
 focusService.initDb().then(() => {
     server.listen(PORT, () => {
         console.log(`Life RPG Dashboard running on http://localhost:${PORT}`);
     });
+}).catch(err => {
+    console.error("Failed to initialize DB and start server:", err);
+    process.exit(1);
+});
+
+io.on('connection', (socket) => {
+    console.log('Dashboard client connected');
+    socket.on('disconnect', () => console.log('Dashboard client disconnected'));
 });

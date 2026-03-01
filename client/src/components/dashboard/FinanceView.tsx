@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { api } from '@/services/api';
+import React from 'react';
 import { FinanceData } from '@/types';
 
 const M = (emoji: string) => `${emoji}\uFE0E`;
@@ -12,17 +11,19 @@ interface FinanceViewProps {
 
 export const FinanceView: React.FC<FinanceViewProps> = ({ data }) => {
   const { financeData } = data;
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editData, setEditData] = useState<FinanceData>(financeData);
 
-  const handleUpdate = async () => {
-    try {
-      await api.updateFinance(editData);
-      setShowEditModal(false);
-    } catch (e) { console.error(e); }
+  const formatCurrency = (val: string | undefined) => {
+    if (!val) return '-';
+    if (val.startsWith('$')) return val;
+    const num = parseFloat(val.replace(/[^0-9.]/g, ''));
+    if (isNaN(num)) return val;
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
   };
 
-  const getNumeric = (val: string) => parseInt(val?.replace(/[^0-9]/g, '') || '0');
+  const getNumeric = (val: string) => {
+    if (!val) return 0;
+    return parseFloat(val.replace(/[^0-9.]/g, '') || '0');
+  };
 
   const efTarget = financeData.targets?.emergencyFund || 10000;
   const efCurrent = getNumeric(financeData.emergencyFund);
@@ -33,32 +34,36 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ data }) => {
   const cbPercent = Math.min(100, Math.round((cbCurrent / cbTarget) * 100));
 
   const financeCards = [
-    { label: 'Net Worth', value: financeData.netWorth, icon: M('📈'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
-    { label: 'Safety Fund', value: financeData.emergencyFund, icon: M('🛡'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
-    { label: 'Cash Reserve', value: financeData.cashReserve, icon: M('🏦'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
-    { label: 'Harvest', value: financeData.income, icon: M('🌾'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
-    { label: 'Burn Rate', value: financeData.burnRate, icon: M('🔥'), color: 'text-cozy-warm', bg: 'bg-cozy-warm/10' },
-    { label: 'Savings Rate', value: financeData.savingsRate, icon: M('🐷'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
+    { label: 'Net Worth', value: formatCurrency(financeData.netWorth), icon: M('📈'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
+    { label: 'NW Change', value: (financeData.netWorthChangePct || 0) >= 0 ? `+${financeData.netWorthChangePct}%` : `${financeData.netWorthChangePct}%`, icon: M('🚀'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
+    { label: 'Emergency Fund', value: formatCurrency(financeData.emergencyFund), icon: M('🛡'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
+    { label: 'Cash', value: formatCurrency(financeData.cashReserve), icon: M('🏦'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
+    { label: 'Income', value: formatCurrency(financeData.income), icon: M('🌾'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
+    { label: 'Fixed Costs', value: formatCurrency(financeData.fixedCosts), icon: M('🏠'), color: 'text-cozy-warm', bg: 'bg-cozy-warm/10' },
+    { label: 'Monthly Surplus', value: formatCurrency(financeData.monthlySurplus), icon: M('🌱'), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Savings Rate', value: financeData.savingsRate + (financeData.savingsRate?.includes('%') ? '' : '%'), icon: M('🐷'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' },
   ];
 
   return (
-    <div className="space-y-6 sm:space-y-12 animate-pop max-w-6xl mx-auto">
+    <div className="space-y-6 sm:space-y-12 animate-pop max-w-6xl mx-auto pb-20">
       
       {/* Finance Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {financeCards.map((card, idx) => {
           return (
-            <div key={idx} className="bg-cozy-panel p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex flex-col group hover:-translate-y-1 transition-all">
-              <div className="flex justify-between items-center mb-4 sm:mb-6">
-                <div className={`w-12 h-12 sm:w-14 h-14 rounded-xl sm:rounded-[1.2rem] ${card.bg} flex items-center justify-center border-2 border-transparent group-hover:scale-105 transition-all`}>
-                  <span className="noto-emoji text-2xl sm:text-3xl block leading-none">{card.icon}</span>
+            <div key={idx} className="bg-cozy-panel p-5 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-cozy-border shadow-[0_6px_0_0_var(--cozy-border)] flex flex-col group hover:-translate-y-1 transition-all">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <div className={`w-10 h-10 sm:w-12 h-12 rounded-xl sm:rounded-[1.1rem] ${card.bg} flex items-center justify-center border-2 border-transparent group-hover:scale-105 transition-all`}>
+                  <span className="noto-emoji text-xl sm:text-2xl block leading-none">{card.icon}</span>
                 </div>
-                <div className="text-[8px] sm:text-[10px] font-bold text-cozy-text-dim uppercase tracking-widest px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-cozy-bg-alt border border-cozy-border">
-                  {financeData.lastUpdated || 'Recently'}
-                </div>
+                {idx === 0 && (
+                  <div className="text-[7px] sm:text-[9px] font-bold text-cozy-text-dim uppercase tracking-widest px-2 py-1 rounded-full bg-cozy-bg-alt border border-cozy-border">
+                    {financeData.lastUpdated?.split('T')[0] || 'Recently'}
+                  </div>
+                )}
               </div>
-              <span className="text-[10px] sm:text-xs text-cozy-text-dim uppercase tracking-widest font-bold mb-1">{card.label}</span>
-              <span className={`text-2xl sm:text-4xl font-bold tracking-tighter ${card.color}`}>{card.value || '-'}</span>
+              <span className="text-[9px] sm:text-[10px] text-cozy-text-dim uppercase tracking-widest font-black mb-1">{card.label}</span>
+              <span className={`text-xl sm:text-2xl font-bold tracking-tighter ${card.color} tabular-nums`}>{card.value || '-'}</span>
             </div>
           );
         })}
@@ -102,50 +107,83 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="flex justify-center">
-        <button 
-          onClick={() => setShowEditModal(true)}
-          className="bg-cozy-panel hover:bg-cozy-bg-alt text-cozy-accent font-bold px-6 sm:px-10 py-4 sm:py-5 rounded-xl sm:rounded-[2rem] border-2 border-cozy-border shadow-[0_6px_0_0_var(--cozy-border)] sm:shadow-[0_8px_0_0_var(--cozy-border)] active:shadow-none active:translate-y-1 transition-all flex items-center gap-2 sm:gap-3 text-sm sm:text-base"
-        >
-          <span className="noto-emoji text-xl sm:text-2xl">{M('📝')}</span>
-          <span>Adjust Wealth Journal</span>
-        </button>
-      </div>
-
-      {/* Edit Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-cozy-text-dark/40 backdrop-blur-sm animate-pop">
-          <div className="bg-cozy-panel p-6 sm:p-12 rounded-[2rem] sm:rounded-[3.5rem] border-2 border-cozy-accent shadow-[0_15px_0_0_var(--cozy-accent)] max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <h3 className="text-xl sm:text-3xl font-bold text-cozy-text-dark mb-6 sm:mb-10 text-center flex items-center justify-center gap-3 sm:gap-4">
-               <span className="noto-emoji text-2xl sm:text-3xl">{M('✦')}</span> Adjust Finances
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
-              {['netWorth', 'emergencyFund', 'cashReserve', 'income', 'burnRate', 'savingsRate'].map(key => (
-                <div key={key} className="space-y-1 sm:space-y-2">
-                  <label className="text-[9px] sm:text-[10px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">{key.replace(/([A-Z])/g, ' $1')}</label>
-                  <input 
-                    type="text" 
-                    value={(editData as any)[key] || ''}
-                    onChange={(e) => setEditData({ ...editData, [key]: e.target.value })}
-                    className="w-full bg-cozy-bg-alt border-2 border-cozy-border rounded-xl sm:rounded-2xl px-4 sm:px-5 py-3 sm:py-4 text-sm sm:text-base text-cozy-accent font-bold focus:outline-none focus:border-cozy-accent transition-colors"
-                  />
-                </div>
-              ))}
+      {/* Ruby's Analysis Section */}
+      {financeData.notes && (
+        <div className="bg-indigo-50/30 dark:bg-indigo-900/10 border-2 border-indigo-100 dark:border-indigo-900/30 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-12 shadow-[0_12px_0_0_rgba(199,210,254,0.3)] dark:shadow-none animate-blur-in">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10 border-b-2 border-indigo-100/50 dark:border-indigo-900/30 pb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 sm:w-16 h-16 bg-indigo-500 rounded-3xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                <span className="noto-emoji text-2xl sm:text-3xl">{M('✨')}</span>
+              </div>
+              <div>
+                <h3 className="text-xl sm:text-3xl font-black text-indigo-900 dark:text-indigo-300 uppercase tracking-tight">Financial Analysis</h3>
+                <p className="text-[10px] sm:text-sm font-bold text-indigo-400 uppercase tracking-[0.2em]">Insights from the vault</p>
+              </div>
             </div>
-            <div className="flex gap-3 sm:gap-4 mt-8 sm:mt-12">
-              <button 
-                onClick={handleUpdate}
-                className="flex-1 bg-cozy-accent text-white font-bold py-4 sm:py-6 rounded-xl sm:rounded-2xl shadow-[0_4px_0_0_var(--cozy-accent-dark)] sm:shadow-[0_6px_0_0_var(--cozy-accent-dark)] active:shadow-none active:translate-y-1 transition-all text-base sm:text-xl"
-              >
-                Save
-              </button>
-              <button 
-                onClick={() => setShowEditModal(false)}
-                className="flex-1 bg-cozy-panel border-2 border-cozy-border text-cozy-text-dim font-bold py-4 sm:py-6 rounded-xl sm:rounded-2xl shadow-[0_4px_0_0_var(--cozy-border)] sm:shadow-[0_6px_0_0_var(--cozy-border)] active:shadow-none active:translate-y-1 transition-all text-base sm:text-xl"
-              >
-                Close
-              </button>
+            
+            {/* Metadata Tags */}
+            <div className="flex flex-wrap gap-2">
+              {financeData.notes.split('\n').filter(l => l.includes('**Period:**') || l.includes('**Last Updated:**')).map((metaLine, i) => {
+                const parts = metaLine.split(':**');
+                if (parts.length < 2) return null;
+                const label = parts[0].replace(/\*\*/g, '').trim();
+                const value = parts[1].replace(/\*\*/g, '').trim();
+                return (
+                  <div key={i} className="px-3 py-1.5 bg-indigo-100/50 dark:bg-indigo-900/40 rounded-xl border border-indigo-200/50 dark:border-indigo-800/30 flex items-center gap-2">
+                    <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{label}</span>
+                    <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 whitespace-nowrap">{value}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          <div className="prose prose-indigo dark:prose-invert max-w-none">
+            <div className="space-y-6 text-cozy-text-dark dark:text-indigo-100/80 font-medium leading-relaxed text-sm sm:text-lg whitespace-pre-wrap font-sans">
+              {(() => {
+                const lines = financeData.notes.split('\n')
+                  .filter(l => {
+                      const line = l.trim();
+                      return !line.startsWith('**Period:**') && 
+                             !line.startsWith('**Data Source:**') && 
+                             !line.startsWith('**Last Updated:**') && 
+                             !line.startsWith('# ') && 
+                             !line.startsWith('<!--') &&
+                             !line.startsWith('-->') &&
+                             !line.startsWith('- ') &&
+                             !line.includes('FORMAT SPEC');
+                  });
+                
+                // Find index of first meaningful content (not empty, not a divider)
+                const firstContentIdx = lines.findIndex(l => l.trim() !== '' && !l.trim().startsWith('---'));
+                const contentLines = firstContentIdx === -1 ? [] : lines.slice(firstContentIdx);
+
+                return contentLines.map((line, i) => {
+                  const trimmed = line.trim();
+                  if (trimmed === '') return <div key={i} className="h-2" />;
+                  if (trimmed.startsWith('## ')) {
+                    return (
+                      <h2 key={i} className={`text-xl sm:text-2xl font-bold text-indigo-800 dark:text-indigo-300 ${i === 0 ? 'mt-0' : 'mt-12'} mb-6 border-b-2 border-indigo-100 dark:border-indigo-900/30 pb-2 uppercase tracking-tight`}>
+                        {trimmed.replace('## ', '')}
+                      </h2>
+                    );
+                  }
+                  if (trimmed.startsWith('---')) return <hr key={i} className="border-indigo-100 dark:border-indigo-900/30 my-8" />;
+                  
+                  // Simple inline bolding for key numbers
+                  const parts = line.split(/(\*\*.*?\*\*)/g);
+                  return (
+                    <p key={i} className="mb-4">
+                      {parts.map((part, pi) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                          return <span key={pi} className="text-indigo-600 dark:text-indigo-400 font-black px-1.5 py-0.5 bg-indigo-100/30 dark:bg-indigo-900/20 rounded-lg">{part.replace(/\*\*/g, '')}</span>;
+                        }
+                        return part;
+                      })}
+                    </p>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>

@@ -36,7 +36,7 @@ router.get('/habits/streaks', async (req, res) => {
 router.post('/habits/toggle', async (req, res) => {
     try {
         const { habit, date, note } = req.body;
-        const result = await habitService.toggleHabit(habit, date, note);
+        const result = await habitService.toggleHabit(habit, date, note, req.io);
         const updatedHabits = await habitService.getTodayHabits(date);
         const weekly = await habitService.getWeeklyHabits();
         const streaks = await habitService.getHabitStreaks();

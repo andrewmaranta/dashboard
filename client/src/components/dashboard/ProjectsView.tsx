@@ -14,7 +14,7 @@ const getProjectIcon = (name: string, attribute: string) => {
   
   switch (attribute) {
     case 'PWR': return M('⚔');
-    case 'DSC': return M('⚡');
+    case 'DSC': return M('⚒');
     case 'VIT': return M('🛡');
     case 'KNW': return M('📜');
     case 'WEL': return M('🧡');

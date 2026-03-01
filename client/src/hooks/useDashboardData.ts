@@ -15,7 +15,7 @@ export const useDashboardData = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [attributes, setAttributes] = useState<Attributes>({});
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [habits, setHabits] = useState<DailyHabits>({ _date: new Date().toISOString().split('T')[0], workout: false, read20Min: false, digitalSunset: false, socialInteraction: false, medication: false });
+  const [habits, setHabits] = useState<DailyHabits>({ _date: new Date().toISOString().split('T')[0], workout: false, yoga: false, digitalSunset: false, socialInteraction: false, medication: false });
   const [healthStats, setHealthStats] = useState<HealthStat[]>([]);
   const [financeData, setFinanceData] = useState<FinanceData>({ 
     netWorth: '0', 
@@ -29,18 +29,26 @@ export const useDashboardData = () => {
   const [dailyStats, setDailyStats] = useState<any>(null); // For streaks, etc.
   const [heatmap, setHeatmap] = useState<any[]>([]);
   const [xpNotifications, setXpNotifications] = useState<{ id: string, amount: number, attribute: string }[]>([]);
+  const [levelUpNotifications, setLevelUpNotifications] = useState<{ id: string, attribute: string, name: string, newLevel: number }[]>([]);
+  const [focusNotifications, setFocusNotifications] = useState<{ id: string, type: string, duration: number }[]>([]);
+  const [stateLogs, setStateLogs] = useState<any[]>([]);
 
   const fetchData = async (isInitial = false) => {
     try {
       if (isInitial) setLoading(true);
-      const [questsData, tasksData, healthData, financeRes, campaignsRes, dailyStatsRes, heatmapRes] = await Promise.all([
+      
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const [questsData, tasksData, healthData, financeRes, campaignsRes, dailyStatsRes, heatmapRes, logsRes] = await Promise.all([
         api.getQuests(),
         api.getTasks(),
         api.getHealth(),
         api.getFinance(),
         api.getCampaigns(),
         api.getDailyStats(),
-        api.getHeatmap()
+        api.getHeatmap(),
+        api.getStateLogs(undefined, thirtyDaysAgo.toISOString())
       ]);
 
       setProfile(questsData.profile);
@@ -51,6 +59,7 @@ export const useDashboardData = () => {
       setCampaigns(campaignsRes);
       setDailyStats(dailyStatsRes);
       setHeatmap(heatmapRes);
+      setStateLogs(logsRes);
 
       const today = new Date().toISOString().split('T')[0];
       const habitsRes = await api.getHabits(today);
@@ -73,10 +82,17 @@ export const useDashboardData = () => {
     socket.on('questUpdated', () => fetchData());
     socket.on('tasksUpdated', () => fetchData());
     socket.on('xpGainedV2', (data: { amount: number, attribute: string }) => {
-      // Show notification if implementing notifications
-      console.log(`XP Gained: +${data.amount} ${data.attribute}`);
       setXpNotifications(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), ...data }]);
       fetchData(); // Refresh attributes
+    });
+
+    socket.on('levelUp', (data: { attribute: string, name: string, newLevel: number }) => {
+      setLevelUpNotifications(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), ...data }]);
+      fetchData(); // Refresh attributes
+    });
+
+    socket.on('focusSessionComplete', (data: { type: string, duration: number }) => {
+      setFocusNotifications(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), ...data }]);
     });
 
     return () => {
@@ -86,11 +102,21 @@ export const useDashboardData = () => {
       socket.off('questUpdated');
       socket.off('tasksUpdated');
       socket.off('xpGainedV2');
+      socket.off('levelUp');
+      socket.off('focusSessionComplete');
     };
   }, []);
 
   const removeXpNotification = (id: string) => {
     setXpNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const removeLevelUpNotification = (id: string) => {
+    setLevelUpNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const removeFocusNotification = (id: string) => {
+    setFocusNotifications(prev => prev.filter(n => n.id !== id));
   };
 
   return {
@@ -105,7 +131,12 @@ export const useDashboardData = () => {
     dailyStats,
     heatmap,
     xpNotifications,
+    levelUpNotifications,
+    focusNotifications,
+    stateLogs,
     removeXpNotification,
+    removeLevelUpNotification,
+    removeFocusNotification,
     refetch: fetchData
   };
 };

@@ -11,6 +11,28 @@ async function getDb() {
     return db;
 }
 
+async function getTargets() {
+    const database = await getDb();
+    const row = await database.get('SELECT * FROM nutrition_targets WHERE id = 1');
+    return row || { calories_target: 1500, calories_warning: 1700, protein_target: 120, protein_partial: 90 };
+}
+
+async function updateTargets(targets) {
+    const database = await getDb();
+    await database.run(
+        `INSERT INTO nutrition_targets (id, calories_target, calories_warning, protein_target, protein_partial, updated_at)
+         VALUES (1, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(id) DO UPDATE SET
+         calories_target = excluded.calories_target,
+         calories_warning = excluded.calories_warning,
+         protein_target = excluded.protein_target,
+         protein_partial = excluded.protein_partial,
+         updated_at = excluded.updated_at`,
+        [targets.calories_target, targets.calories_warning, targets.protein_target, targets.protein_partial]
+    );
+    return getTargets();
+}
+
 async function getHealthData() {
     const database = await getDb();
     return await database.all('SELECT date, weight, body_fat as bodyFat FROM weight_history ORDER BY date ASC');
@@ -53,6 +75,7 @@ async function getMealsForDate(date) {
 
 async function getHeatmapData(requestedDate) {
     const database = await getDb();
+    const targets = await getTargets();
     const habitService = require('./habitService');
     const { habitMapping } = habitService;
     
@@ -74,7 +97,9 @@ async function getHeatmapData(requestedDate) {
     const allDates = Array.from(dailyStats.keys()).sort();
     const history = new Map();
     if (allDates.length > 0) {
-        const runningStreaks = { workout: 0, read20Min: 0, digitalSunset: 0, socialInteraction: 0, medication: 0, calories: 0, protein: 0 };
+        const runningStreaks = { workout: 0, yoga: 0, digitalSunset: 0, socialInteraction: 0, medication: 0, calories: 0, protein: 0 };
+        const gaps = { workout: 0, yoga: 0, digitalSunset: 0, socialInteraction: 0, medication: 0, calories: 0, protein: 0 };
+        
         const firstDate = new Date(allDates[0] + 'T12:00:00');
         const localNow = new Date();
         const todayStr = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
@@ -86,12 +111,12 @@ async function getHeatmapData(requestedDate) {
             
             const results = {
                 workout: stats.habits.has('workout'),
-                read20Min: stats.habits.has('read20Min'),
+                yoga: stats.habits.has('yoga'),
                 digitalSunset: stats.habits.has('digitalSunset'),
                 socialInteraction: stats.habits.has('socialInteraction'),
                 medication: stats.habits.has('medication'),
-                calories: (stats.calories > 0 && stats.calories <= 1800) ? 1 : (stats.calories > 1800 && stats.calories <= 2000 ? 0.5 : 0),
-                protein: (stats.protein >= 150) ? 1 : (stats.protein > 100 ? 0.5 : 0),
+                calories: (stats.calories > 0 && stats.calories <= targets.calories_target) ? 1 : (stats.calories > targets.calories_target && stats.calories <= targets.calories_warning ? 0.5 : 0),
+                protein: (stats.protein >= targets.protein_target) ? 1 : (stats.protein > targets.protein_partial ? 0.5 : 0),
                 workoutNote: stats.workoutNote
             };
 
@@ -101,10 +126,36 @@ async function getHeatmapData(requestedDate) {
                 
                 if (results[k] === true || results[k] === 1) {
                     runningStreaks[k]++;
+                    gaps[k] = 0;
                     dailyResults[k] = runningStreaks[k];
                 } else {
-                    runningStreaks[k] = 0;
-                    dailyResults[k] = results[k]; // 0 or 0.5
+                    // Miss (or partial)
+                    gaps[k]++;
+                    if (gaps[k] === 1 && runningStreaks[k] > 0) {
+                        // First miss after a streak -> Safety Day
+                        // Encode as negative streak count to preserve color but flag safety
+                        dailyResults[k] = -runningStreaks[k]; 
+                    } else {
+                        // Second miss or no streak -> Fail
+                        dailyResults[k] = results[k]; // 0 or 0.5
+                        
+                        // Only kill the previous shield if we are PAST today 
+                        // or if it's the second miss and we're not on today's processing yet
+                        if (gaps[k] === 2 && dStr !== todayStr) {
+                            // Retroactive kill: The previous day was marked Safety (negative), but streak is now broken.
+                            // Convert the Shield to a Fail
+                            const prevDate = new Date(d);
+                            prevDate.setDate(prevDate.getDate() - 1);
+                            const prevDStr = prevDate.toISOString().split('T')[0];
+                            const prevEntry = history.get(prevDStr);
+                            if (prevEntry && prevEntry[k] < 0) {
+                                prevEntry[k] = 0; 
+                            }
+                            runningStreaks[k] = 0;
+                        } else if (gaps[k] > 2) {
+                            runningStreaks[k] = 0;
+                        }
+                    }
                 }
             });
             history.set(dStr, dailyResults);
@@ -130,7 +181,7 @@ async function getHeatmapData(requestedDate) {
         result.push({
             date: dateStr,
             workout: h.workout || 0,
-            reading: h.read20Min || 0,
+            yoga: h.yoga || 0,
             digitalSunset: h.digitalSunset || 0,
             social: h.socialInteraction || 0,
             medication: h.medication || 0,
@@ -144,6 +195,7 @@ async function getHeatmapData(requestedDate) {
 
 async function getStreaks() {
     const database = await getDb();
+    const targets = await getTargets();
     const rows = await database.all(`
         SELECT date, SUM(calories) as calories, SUM(protein) as protein 
         FROM nutrition_log 
@@ -156,7 +208,7 @@ async function getStreaks() {
     const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const yesterdayDate = new Date(localNow.getTime() - 86400000);
     const yesterday = new Date(yesterdayDate.getTime() - (yesterdayDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-    
+
     const hasRecentData = rows.length > 0 && (rows[0].date === today || rows[0].date === yesterday);
 
     let foodLogStreak = 0;
@@ -167,8 +219,8 @@ async function getStreaks() {
         for (let i = 0; i < rows.length; i++) {
             if (i > 0 && !isDateConsecutive(rows[i-1].date, rows[i].date)) break;
             foodLogStreak++;
-            if (rows[i].calories <= 1800 && rows[i].calories > 0) calorieStreak++;
-            if (rows[i].protein >= 150) proteinStreak++;
+            if (rows[i].calories <= targets.calories_target && rows[i].calories > 0) calorieStreak++;
+            if (rows[i].protein >= targets.protein_target) proteinStreak++;
         }
     }
 
@@ -250,5 +302,7 @@ module.exports = {
     getMealsForDate,
     updateHealthStats,
     getSleepHistory,
-    updateSleep
+    updateSleep,
+    getTargets,
+    updateTargets
 };

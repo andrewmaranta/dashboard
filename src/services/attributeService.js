@@ -10,7 +10,7 @@ async function getDb() {
     return db;
 }
 
-async function addXP(attributeCode, amount) {
+async function addXP(attributeCode, amount, io = null) {
     if (!attributeCode || amount <= 0) return null;
     
     const database = await getDb();
@@ -34,6 +34,14 @@ async function addXP(attributeCode, amount) {
         'UPDATE attributes SET xp = ?, score = ?, xp_max = ? WHERE code = ?',
         [newXP, newScore, newMax, attributeCode]
     );
+    
+    if (leveledUp && io) {
+        io.emit('levelUp', { 
+            attribute: attributeCode, 
+            name: attr.name, 
+            newLevel: newScore 
+        });
+    }
     
     return { 
         code: attributeCode, 

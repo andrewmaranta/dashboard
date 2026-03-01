@@ -1,60 +1,129 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '@/services/api';
+import { PomodoroState } from '@/types';
 
-interface PomodoroState {
-  timeLeft: number;
-  isRunning: boolean;
-  mode: 'work' | 'break';
-  workDuration: number;
-  breakDuration: number;
-  breaksEarned: number;
-}
+const DEFAULT_STATE: PomodoroState = {
+  timeLeft: 25 * 60,
+  isRunning: false,
+  mode: 'work',
+  workDuration: 25 * 60,
+  breakDuration: 5 * 60,
+  breaksEarned: 0
+};
 
 export const usePomodoro = () => {
-  const [state, setState] = useState<PomodoroState>({
-    timeLeft: 25 * 60,
-    isRunning: false,
-    mode: 'work',
-    workDuration: 25 * 60,
-    breakDuration: 5 * 60,
-    breaksEarned: 0
-  });
+  const [state, setState] = useState<PomodoroState>(DEFAULT_STATE);
+  const [loading, setLoading] = useState(true);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Initial sync from server
   useEffect(() => {
-    // Request notification permission on mount
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-      Notification.requestPermission();
-    }
+    const fetchServerState = async () => {
+      try {
+        const serverState = await api.getPomoState();
+        if (serverState) {
+          const lastTick = serverState.lastTick ? parseInt(serverState.lastTick) : null;
+          let timeLeft = serverState.timeLeft;
+          
+          if (serverState.isRunning && lastTick) {
+            const elapsed = Math.floor((Date.now() - lastTick) / 1000);
+            timeLeft = Math.max(0, serverState.timeLeft - elapsed);
+          }
 
-    // Load saved settings
-    const savedWork = localStorage.getItem('pomoWorkTime');
-    const savedBreak = localStorage.getItem('pomoBreakTime');
-    const savedEarned = localStorage.getItem('pomoBreaksEarned');
+          setState({
+            timeLeft,
+            isRunning: !!serverState.isRunning,
+            mode: serverState.mode as 'work' | 'break',
+            workDuration: serverState.workDuration,
+            breakDuration: serverState.breakDuration,
+            breaksEarned: serverState.breaksEarned
+          });
+        }
+      } catch (error) {
+        console.error('Failed to sync from server:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchServerState();
+  }, []);
+
+  // Sync to server (debounced)
+  const syncToServer = useCallback((data: Partial<PomodoroState>, immediate = false) => {
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     
-    if (savedWork || savedBreak || savedEarned) {
-      setState(prev => ({
-        ...prev,
-        workDuration: savedWork ? parseInt(savedWork) : prev.workDuration,
-        breakDuration: savedBreak ? parseInt(savedBreak) : prev.breakDuration,
-        breaksEarned: savedEarned ? parseInt(savedEarned) : prev.breaksEarned,
-        timeLeft: savedWork ? parseInt(savedWork) : prev.timeLeft
-      }));
+    const performSync = async () => {
+      try {
+        const syncData = { ...data };
+        if (data.isRunning) {
+          syncData.lastTick = Date.now().toString();
+        }
+        await api.updatePomoState(syncData);
+      } catch (error) {
+        console.error('Failed to sync to server:', error);
+      }
+    };
+
+    if (immediate) {
+      performSync();
+    } else {
+      syncTimeoutRef.current = setTimeout(performSync, 5000); // Sync every 5 seconds if ticking
     }
   }, []);
 
-  useEffect(() => {
-    if (state.isRunning) {
-      timerRef.current = setInterval(() => {
-        setState(prev => {
-          if (prev.timeLeft <= 0) {
-            handleTimerComplete(prev);
-            return prev;
-          }
-          return { ...prev, timeLeft: prev.timeLeft - 1 };
+  const onTimerComplete = useCallback(() => {
+    setState(prev => {
+      const isWork = prev.mode === 'work';
+      
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(isWork ? 'Time for a break! 🍵' : 'Break over, let\'s focus! ⏳', {
+          body: isWork ? 'You\'ve earned a tea break. Great job!' : 'Back to your quest. You got this!',
         });
-      }, 1000);
+      }
+
+      // Log the session
+      api.logFocusSession({
+        timestamp: new Date().toISOString(),
+        type: prev.mode,
+        duration: Math.floor((isWork ? prev.workDuration : prev.breakDuration) / 60)
+      });
+
+      const newState: PomodoroState = {
+        ...prev,
+        isRunning: false,
+        mode: 'work', // Always return to work mode after a break or work session
+        breaksEarned: isWork ? prev.breaksEarned + 1 : prev.breaksEarned,
+        timeLeft: prev.workDuration
+      };
+
+      syncToServer(newState, true);
+      return newState;
+    });
+  }, [syncToServer]);
+
+  useEffect(() => {
+    if (loading) return;
+    
+    if (state.isRunning) {
+      if (state.timeLeft <= 0) {
+        onTimerComplete();
+      } else {
+        timerRef.current = setInterval(() => {
+          setState(prev => {
+            if (prev.timeLeft <= 1) {
+              if (timerRef.current) clearInterval(timerRef.current);
+              return { ...prev, timeLeft: 0 };
+            }
+            // Periodically sync time left to server (every 10 seconds)
+            if (prev.timeLeft % 10 === 0) {
+              syncToServer({ timeLeft: prev.timeLeft - 1, isRunning: true });
+            }
+            return { ...prev, timeLeft: prev.timeLeft - 1 };
+          });
+        }, 1000);
+      }
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
@@ -62,80 +131,93 @@ export const usePomodoro = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [state.isRunning]);
+  }, [state.isRunning, state.timeLeft === 0, onTimerComplete, syncToServer, loading]);
 
-  const handleTimerComplete = (currentState: PomodoroState) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(currentState.mode === 'work' ? 'Time for a break! 🍵' : 'Break over, let\'s focus! ⏳', {
-        body: currentState.mode === 'work' ? 'You\'ve earned a tea break. Great job!' : 'Back to your quest. You got this!',
-      });
-    }
-
-    if (currentState.mode === 'work') {
-      const newEarned = currentState.breaksEarned + 1;
-      localStorage.setItem('pomoBreaksEarned', newEarned.toString());
-      
-      api.logFocusSession({
-        timestamp: new Date().toISOString(),
-        type: 'work',
-        duration: Math.floor(currentState.workDuration / 60)
-      });
-
-      setState(prev => ({
-        ...prev,
-        isRunning: false,
-        breaksEarned: newEarned,
-        timeLeft: prev.workDuration // Reset to work time or auto-break? Client.js resets to work
-      }));
-    } else {
-      // Break ended
-      setState(prev => ({
-        ...prev,
-        mode: 'work',
-        isRunning: false,
-        timeLeft: prev.workDuration
-      }));
-    }
+  const toggleTimer = () => {
+    setState(prev => {
+      const newState = { ...prev, isRunning: !prev.isRunning };
+      syncToServer(newState, true);
+      return newState;
+    });
   };
-
-  const toggleTimer = () => setState(prev => ({ ...prev, isRunning: !prev.isRunning }));
   
-  const resetTimer = () => setState(prev => ({
-    ...prev,
-    isRunning: false,
-    timeLeft: prev.mode === 'work' ? prev.workDuration : prev.breakDuration
-  }));
+  const resetTimer = () => {
+    setState(prev => {
+      const newState = {
+        ...prev,
+        isRunning: false,
+        timeLeft: prev.mode === 'work' ? prev.workDuration : prev.breakDuration
+      };
+      syncToServer(newState, true);
+      return newState;
+    });
+  };
 
   const setDuration = (type: 'work' | 'break', minutes: number) => {
     const seconds = minutes * 60;
-    if (type === 'work') {
-      localStorage.setItem('pomoWorkTime', seconds.toString());
-      setState(prev => ({ ...prev, workDuration: seconds, timeLeft: prev.mode === 'work' ? seconds : prev.timeLeft }));
-    } else {
-      localStorage.setItem('pomoBreakTime', seconds.toString());
-      setState(prev => ({ ...prev, breakDuration: seconds, timeLeft: prev.mode === 'break' ? seconds : prev.timeLeft }));
-    }
+    setState(prev => {
+      const newState = { ...prev };
+      if (type === 'work') {
+        newState.workDuration = seconds;
+        if (prev.mode === 'work' && !prev.isRunning) {
+          newState.timeLeft = seconds;
+        }
+      } else {
+        newState.breakDuration = seconds;
+        if (prev.mode === 'break' && !prev.isRunning) {
+          newState.timeLeft = seconds;
+        }
+      }
+      syncToServer(newState, true);
+      return newState;
+    });
   };
 
   const takeBreak = () => {
     if (state.breaksEarned > 0) {
-      const newEarned = state.breaksEarned - 1;
-      localStorage.setItem('pomoBreaksEarned', newEarned.toString());
-      setState(prev => ({
-        ...prev,
-        mode: 'break',
-        breaksEarned: newEarned,
-        timeLeft: prev.breakDuration,
-        isRunning: true
-      }));
+      setState(prev => {
+        const newState = {
+          ...prev,
+          mode: 'break' as const,
+          breaksEarned: prev.breaksEarned - 1,
+          timeLeft: prev.breakDuration,
+          isRunning: false
+        };
+        syncToServer(newState, true);
+        return newState;
+      });
     }
+  };
+
+  const returnToWork = () => {
+    setState(prev => {
+      const newState = {
+        ...prev,
+        mode: 'work' as const,
+        timeLeft: prev.workDuration,
+        isRunning: false
+      };
+      syncToServer(newState, true);
+      return newState;
+    });
+  };
+
+  const clearBreaks = () => {
+    setState(prev => {
+      const newState = { ...prev, breaksEarned: 0 };
+      syncToServer(newState, true);
+      return newState;
+    });
   };
 
   return {
     state,
+    loading,
     toggleTimer,
     resetTimer,
     setDuration,
-    takeBreak
+    takeBreak,
+    returnToWork,
+    clearBreaks
   };
 };

@@ -24,4 +24,18 @@ router.post('/finance', async (req, res) => {
     }
 });
 
+router.post('/finance/sync', async (req, res) => {
+    try {
+        const result = await financeService.syncTransactions();
+        if (result.error) {
+            return res.status(400).json(result);
+        }
+        req.io.emit('financeUpdated', result.data);
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to sync transactions' });
+    }
+});
+
 module.exports = router;

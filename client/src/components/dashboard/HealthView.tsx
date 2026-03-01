@@ -5,7 +5,7 @@ import {
   Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend, BarChart, Bar, Cell, ComposedChart
 } from 'recharts';
-import { ChevronLeft, Star, Activity } from 'lucide-react';
+import { ChevronLeft, Star, Activity, Plus, Minus } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 
 const M = (emoji: string) => `${emoji}\uFE0E`;
@@ -16,6 +16,30 @@ interface HealthViewProps {
   };
 }
 
+const NumberStepper = ({ value, onChange, step = 1, min = 0, max = 999, color = 'text-cozy-text', suffix = '' }: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    if (!isNaN(val)) onChange(val);
+  };
+
+  return (
+    <div className="flex items-center gap-2 bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-border rounded-xl sm:rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 w-full">
+      <button onClick={() => onChange(Math.max(min, Number((value - step).toFixed(1))))} className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-cozy-bg/50 transition-colors ${color}`}><Minus size={16} className="sm:w-5 sm:h-5" /></button>
+      <div className="flex-1 flex items-center justify-center">
+        <input 
+          type="number" 
+          value={value} 
+          onChange={handleChange}
+          step={step}
+          className={`font-bold text-xl sm:text-2xl ${color} bg-transparent text-center w-full focus:outline-none appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+        />
+        {suffix && <span className="text-xs font-bold text-cozy-text-dim ml-1">{suffix}</span>}
+      </div>
+      <button onClick={() => onChange(Math.min(max, Number((value + step).toFixed(1))))} className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-cozy-bg/50 transition-colors ${color}`}><Plus size={16} className="sm:w-5 sm:h-5" /></button>
+    </div>
+  );
+};
+
 export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
   const { healthStats } = data;
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -25,12 +49,16 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSleepModal, setShowSleepModal] = useState(false);
   const [showBPModal, setShowBPModal] = useState(false);
+  
+  // Stats State
   const [weight, setWeight] = useState(healthStats[healthStats.length - 1]?.weight || 0);
   const [bodyFat, setBodyFat] = useState(healthStats[healthStats.length - 1]?.bodyFat || 0);
   
+  // Sleep State
   const [sleepHours, setSleepHours] = useState(8);
   const [sleepQuality, setSleepQuality] = useState(3);
 
+  // BP State
   const [systolic, setSystolic] = useState(120);
   const [diastolic, setDiastolic] = useState(80);
   const [pulse, setPulse] = useState(60);
@@ -102,8 +130,6 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
       
       {/* Top Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-8">
-        
-        {/* Combined Weight & Body Fat Card */}
         <div className="lg:col-span-2 bg-cozy-panel p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex justify-around items-center group hover:-translate-y-1 transition-transform">
           <div className="flex flex-col items-center">
             <span className="text-[8px] sm:text-[10px] text-cozy-text-dim uppercase tracking-widest font-bold mb-1 sm:mb-2">Weight</span>
@@ -122,13 +148,12 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Daily Nutrition Summary */}
         <div className="lg:col-span-3 bg-cozy-panel p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex justify-around items-center group hover:-translate-y-1 transition-transform">
           <div className="flex flex-col items-center">
             <span className="text-[8px] sm:text-[10px] text-cozy-text-dim uppercase tracking-widest font-bold mb-1 sm:mb-2">Calories</span>
             <div className="flex items-center gap-1 sm:gap-2">
               <span className="noto-emoji text-xl sm:text-2xl">{M('🔥')}</span>
-              <span className={`text-xl sm:text-3xl font-bold tracking-tighter ${totalCals > 1800 ? 'text-cozy-warm' : 'text-cozy-accent'}`}>{totalCals}</span>
+              <span className={`text-xl sm:text-3xl font-bold tracking-tighter ${totalCals > 1500 ? 'text-cozy-warm' : 'text-cozy-accent'}`}>{totalCals}</span>
             </div>
           </div>
           <div className="w-0.5 h-10 sm:h-12 bg-cozy-bg-alt"></div>
@@ -136,7 +161,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
             <span className="text-[8px] sm:text-[10px] text-cozy-text-dim uppercase tracking-widest font-bold mb-1 sm:mb-2">Protein</span>
             <div className="flex items-center gap-1 sm:gap-2">
               <span className="noto-emoji text-xl sm:text-2xl">{M('⚡')}</span>
-              <span className={`text-xl sm:text-3xl font-bold tracking-tighter ${totalProtein >= 150 ? 'text-cozy-accent' : 'text-cozy-warm'}`}>{totalProtein}<small className="text-xs sm:text-sm">g</small></span>
+              <span className={`text-xl sm:text-3xl font-bold tracking-tighter ${totalProtein >= 120 ? 'text-cozy-accent' : 'text-cozy-warm'}`}>{totalProtein}<small className="text-xs sm:text-sm">g</small></span>
             </div>
           </div>
           <div className="w-0.5 h-10 sm:h-12 bg-cozy-bg-alt"></div>
@@ -425,19 +450,11 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
             <div className="space-y-6 sm:space-y-8">
               <div className="space-y-2 sm:space-y-3">
                 <label className="text-[10px] sm:text-[11px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">Weight (lbs)</label>
-                <input 
-                  type="number" step="0.1" value={weight}
-                  onChange={(e) => setWeight(parseFloat(e.target.value))}
-                  className="w-full bg-cozy-bg-alt border-2 border-cozy-border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-cozy-accent font-bold focus:outline-none focus:border-cozy-accent text-xl sm:text-2xl transition-colors"
-                />
+                <NumberStepper value={weight} onChange={setWeight} step={0.1} color="text-cozy-accent" />
               </div>
               <div className="space-y-2 sm:space-y-3">
                 <label className="text-[10px] sm:text-[11px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">Body Fat (%)</label>
-                <input 
-                  type="number" step="0.1" value={bodyFat}
-                  onChange={(e) => setBodyFat(parseFloat(e.target.value))}
-                  className="w-full bg-cozy-bg-alt border-2 border-cozy-border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-cozy-warm font-bold focus:outline-none focus:border-cozy-warm text-xl sm:text-2xl transition-colors"
-                />
+                <NumberStepper value={bodyFat} onChange={setBodyFat} step={0.1} color="text-cozy-warm" suffix="%" />
               </div>
             </div>
             <div className="flex gap-3 sm:gap-4 mt-8 sm:mt-12">
@@ -466,20 +483,16 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
             <div className="space-y-6 sm:space-y-8">
               <div className="space-y-2 sm:space-y-3">
                 <label className="text-[10px] sm:text-[11px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">Hours Slept</label>
-                <input 
-                  type="number" step="0.5" value={sleepHours}
-                  onChange={(e) => setSleepHours(parseFloat(e.target.value))}
-                  className="w-full bg-cozy-bg-alt border-2 border-cozy-border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-indigo-400 font-bold focus:outline-none focus:border-indigo-400 text-xl sm:text-2xl transition-colors"
-                />
+                <NumberStepper value={sleepHours} onChange={setSleepHours} step={0.5} color="text-indigo-400" />
               </div>
               <div className="space-y-2 sm:space-y-3">
                 <label className="text-[10px] sm:text-[11px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">Quality (1-5)</label>
-                <div className="flex justify-between items-center bg-cozy-bg-alt p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 border-cozy-border">
+                <div className="flex justify-between items-center bg-cozy-bg-alt dark:bg-black/20 p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 border-cozy-border">
                   {[1, 2, 3, 4, 5].map((q) => (
                     <button 
                       key={q}
                       onClick={() => setSleepQuality(q)}
-                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center transition-all ${sleepQuality === q ? 'bg-indigo-400 text-white shadow-lg' : 'text-cozy-text-dim hover:bg-white'}`}
+                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center transition-all ${sleepQuality === q ? 'bg-indigo-400 text-white shadow-lg' : 'text-cozy-text-dim hover:bg-cozy-bg/50'}`}
                     >
                       <Star size={16} className="sm:w-4.5 sm:h-4.5" fill={sleepQuality >= q ? 'currentColor' : 'none'} />
                     </button>
@@ -517,28 +530,16 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
               <div className="flex gap-3 sm:gap-4">
                 <div className="space-y-2 sm:space-y-3 flex-1">
                   <label className="text-[10px] sm:text-[11px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">Systolic</label>
-                  <input 
-                    type="number" value={systolic}
-                    onChange={(e) => setSystolic(parseInt(e.target.value))}
-                    className="w-full bg-cozy-bg-alt border-2 border-cozy-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-3 sm:py-4 text-cozy-warm font-bold focus:outline-none focus:border-cozy-warm text-xl sm:text-2xl transition-colors text-center"
-                  />
+                  <NumberStepper value={systolic} onChange={setSystolic} step={1} color="text-cozy-warm" />
                 </div>
                 <div className="space-y-2 sm:space-y-3 flex-1">
                   <label className="text-[10px] sm:text-[11px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">Diastolic</label>
-                  <input 
-                    type="number" value={diastolic}
-                    onChange={(e) => setDiastolic(parseInt(e.target.value))}
-                    className="w-full bg-cozy-bg-alt border-2 border-cozy-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-3 sm:py-4 text-cozy-accent font-bold focus:outline-none focus:border-cozy-accent text-xl sm:text-2xl transition-colors text-center"
-                  />
+                  <NumberStepper value={diastolic} onChange={setDiastolic} step={1} color="text-cozy-accent" />
                 </div>
               </div>
               <div className="space-y-2 sm:space-y-3">
                 <label className="text-[10px] sm:text-[11px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">Pulse (BPM)</label>
-                <input 
-                  type="number" value={pulse}
-                  onChange={(e) => setPulse(parseInt(e.target.value))}
-                  className="w-full bg-cozy-bg-alt border-2 border-cozy-border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-cozy-text-dark font-bold focus:outline-none focus:border-cozy-border text-xl sm:text-2xl transition-colors"
-                />
+                <NumberStepper value={pulse} onChange={setPulse} step={1} color="text-cozy-text-dark" />
               </div>
               <div className="space-y-2 sm:space-y-3">
                 <label className="text-[10px] sm:text-[11px] text-cozy-text-dim uppercase font-bold tracking-widest px-1">Notes</label>
@@ -546,7 +547,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
                   type="text" value={bpNotes}
                   onChange={(e) => setBpNotes(e.target.value)}
                   placeholder="e.g. After coffee"
-                  className="w-full bg-cozy-bg-alt border-2 border-cozy-border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-cozy-text font-bold focus:outline-none focus:border-cozy-border transition-colors"
+                  className="w-full bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-cozy-text dark:text-white font-bold focus:outline-none focus:border-cozy-border transition-colors"
                 />
               </div>
             </div>

@@ -9,15 +9,16 @@ import {
   Campaign, 
   UserProfile, 
   FocusSession,
+  PomodoroState,
   BloodPressureData,
   SleepEntry
 } from '../types';
 
-// API Base URL - Backend runs on port 3000
-const API_BASE = 'http://100.75.38.93:3000';
+// API Base URL - Relative path since frontend is served by backend
+const API_BASE = '';
 
 // Initialize Socket.io connection
-export const socket: Socket = io(API_BASE, {
+export const socket: Socket = io('/', {
   transports: ['websocket'],
   path: '/socket.io'
 });
@@ -75,11 +76,11 @@ export const api = {
     return res.json();
   },
 
-  addTask: async (text: string, attribute?: string): Promise<Task> => {
+  addTask: async (text: string, attribute?: string, difficulty?: string, if_then?: string, belief_id?: number, steps?: any[]): Promise<Task> => {
     const res = await fetch(`${API_BASE}/api/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, attribute })
+      body: JSON.stringify({ text, attribute, difficulty, if_then, belief_id, steps })
     });
     if (!res.ok) throw new Error('Failed to add task');
     return res.json();
@@ -97,11 +98,151 @@ export const api = {
     await fetch(`${API_BASE}/api/tasks/${id}`, { method: 'DELETE' });
   },
 
+  updateTask: async (id: number, text: string, attribute?: string, difficulty?: string, if_then?: string, belief_id?: number, steps?: any[]): Promise<void> => {
+    await fetch(`${API_BASE}/api/tasks/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, text, attribute, difficulty, if_then, belief_id, steps })
+    });
+  },
+
   archiveCompleted: async (): Promise<void> => {
     await fetch(`${API_BASE}/api/tasks/archive-completed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
+  },
+
+  // Task Templates
+  getTemplates: async (): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/api/tasks/templates`);
+    if (!res.ok) throw new Error('Failed to fetch templates');
+    return res.json();
+  },
+
+  addTemplate: async (text: string, attribute?: string, difficulty?: string, if_then?: string, belief_id?: number, steps?: any[]): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/api/tasks/templates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, attribute, difficulty, if_then, belief_id, steps })
+    });
+    if (!res.ok) throw new Error('Failed to add template');
+    return res.json();
+  },
+
+  deleteTemplate: async (id: number): Promise<void> => {
+    await fetch(`${API_BASE}/api/tasks/templates/${id}`, { method: 'DELETE' });
+  },
+
+  // Blueprint (Whole Trait Theory & Somatic Awareness)
+  logState: async (attributeCode: string, value: number, context?: string, location?: string, socialContext?: string): Promise<void> => {
+    await fetch(`${API_BASE}/api/blueprint/state-logs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attributeCode, value, context, location, socialContext })
+    });
+  },
+
+  getStateLogs: async (attributeCode?: string, startDate?: string): Promise<any[]> => {
+    const query = new URLSearchParams();
+    if (attributeCode) query.append('attributeCode', attributeCode);
+    if (startDate) query.append('startDate', startDate);
+    const res = await fetch(`${API_BASE}/api/blueprint/state-logs?${query.toString()}`);
+    if (!res.ok) throw new Error('Failed to fetch state logs');
+    return res.json();
+  },
+
+  logInteroception: async (feeling: string, intensity: number, vagalZone: string): Promise<void> => {
+    await fetch(`${API_BASE}/api/blueprint/interoceptive-logs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ feeling, intensity, vagalZone })
+    });
+  },
+
+  getInteroceptiveLogs: async (limit?: number): Promise<any[]> => {
+    const query = limit ? `?limit=${limit}` : '';
+    const res = await fetch(`${API_BASE}/api/blueprint/interoceptive-logs${query}`);
+    if (!res.ok) throw new Error('Failed to fetch interoceptive logs');
+    return res.json();
+  },
+
+  // Beliefs
+  getBeliefs: async (): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/api/beliefs`);
+    if (!res.ok) throw new Error('Failed to fetch beliefs');
+    return res.json();
+  },
+
+  createBelief: async (text: string, attributeCode?: string, confidence?: number): Promise<void> => {
+    await fetch(`${API_BASE}/api/beliefs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, attributeCode, confidence })
+    });
+  },
+
+  updateBelief: async (id: number, text: string, confidence: number): Promise<void> => {
+    await fetch(`${API_BASE}/api/beliefs/${id}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, confidence })
+    });
+  },
+
+  archiveBelief: async (id: number): Promise<void> => {
+    await fetch(`${API_BASE}/api/beliefs/${id}/archive`, { method: 'POST' });
+  },
+
+  deleteBelief: async (id: number): Promise<void> => {
+    await fetch(`${API_BASE}/api/beliefs/${id}`, { method: 'DELETE' });
+  },
+
+  addEvidence: async (beliefId: number, text: string, type: string = 'manual'): Promise<void> => {
+    await fetch(`${API_BASE}/api/beliefs/${beliefId}/evidence`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, type })
+    });
+  },
+
+  deleteEvidence: async (id: number): Promise<void> => {
+    await fetch(`${API_BASE}/api/evidence/${id}`, { method: 'DELETE' });
+  },
+
+  // Protocols (If-Then)
+  getProtocols: async (): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/api/protocols`);
+    if (!res.ok) throw new Error('Failed to fetch protocols');
+    return res.json();
+  },
+
+  createProtocol: async (trigger: string, action: string | string[], difficulty: string, attribute?: string): Promise<void> => {
+    await fetch(`${API_BASE}/api/protocols`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trigger, action, difficulty, attribute })
+    });
+  },
+
+  logProtocol: async (id: number, hit: boolean): Promise<void> => {
+    await fetch(`${API_BASE}/api/protocols/${id}/log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hit })
+    });
+  },
+
+  updateProtocol: async (id: number, trigger: string, action: string | string[], difficulty: string, attribute?: string): Promise<void> => {
+    await fetch(`${API_BASE}/api/protocols/${id}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, trigger, action, difficulty, attribute })
+    });
+  },
+
+  archiveProtocol: async (id: number): Promise<void> => {
+    await fetch(`${API_BASE}/api/protocols/${id}/archive`, { method: 'POST' });
   },
 
   // Health
@@ -175,6 +316,18 @@ export const api = {
     });
   },
 
+  syncFinance: async (): Promise<any> => {
+    const res = await fetch(`${API_BASE}/api/finance/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to sync finance data');
+    }
+    return res.json();
+  },
+
   // Campaigns
   getCampaigns: async (): Promise<Campaign[]> => {
     const res = await fetch(`${API_BASE}/api/goals`); 
@@ -197,6 +350,20 @@ export const api = {
     });
   },
 
+  getPomoState: async (): Promise<PomodoroState> => {
+    const res = await fetch(`${API_BASE}/api/focus/pomo`);
+    if (!res.ok) throw new Error('Failed to fetch pomodoro state');
+    return res.json();
+  },
+
+  updatePomoState: async (state: Partial<PomodoroState>): Promise<void> => {
+    await fetch(`${API_BASE}/api/focus/pomo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+  },
+
   // Explorer
   getTables: async (): Promise<string[]> => {
     const res = await fetch(`${API_BASE}/api/explorer/tables`);
@@ -213,6 +380,12 @@ export const api = {
   getInsights: async (): Promise<any[]> => {
     const res = await fetch(`${API_BASE}/api/insights`);
     if (!res.ok) throw new Error('Failed to fetch insights');
+    return res.json();
+  },
+
+  getSavoringData: async (): Promise<any> => {
+    const res = await fetch(`${API_BASE}/api/savoring`);
+    if (!res.ok) throw new Error('Failed to fetch savoring data');
     return res.json();
   }
 };
