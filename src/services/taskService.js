@@ -36,7 +36,7 @@ async function addTask(text, attribute, difficulty = 'medium', if_then = null, b
     );
 }
 
-async function toggleTask(id, io = null) {
+async function toggleTask(id, io = null, suds_before = null, suds_after = null) {
     const database = await getDb();
     const task = await database.get('SELECT * FROM tasks WHERE id = ?', [id]);
     if (!task) return;
@@ -44,12 +44,18 @@ async function toggleTask(id, io = null) {
     // Toggle the task status
     const newStatus = task.completed === 0 ? 1 : 0;
     const completedAt = newStatus === 1 ? new Date().toISOString() : null;
-    
-    await database.run(
-        'UPDATE tasks SET completed = ?, completed_at = ? WHERE id = ?',
-        [newStatus, completedAt, id]
-    );
-    
+
+    if (newStatus === 1 && (suds_before !== null || suds_after !== null)) {
+        await database.run(
+            'UPDATE tasks SET completed = ?, completed_at = ?, suds_before = ?, suds_after = ? WHERE id = ?',
+            [newStatus, completedAt, suds_before, suds_after, id]
+        );
+    } else {
+        await database.run(
+            'UPDATE tasks SET completed = ?, completed_at = ? WHERE id = ?',
+            [newStatus, completedAt, id]
+        );
+    }    
     // Handle XP
     let xpResult = null;
     if (task.attribute) {

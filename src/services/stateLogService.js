@@ -19,6 +19,15 @@ async function logState(attributeCode, value, context = null, location = null, s
     );
 }
 
+async function logManualSavoring(text, date) {
+    const database = await getDb();
+    const now = new Date().toISOString();
+    return await database.run(
+        'INSERT INTO manual_savoring_logs (text, date, created_at) VALUES (?, ?, ?)',
+        [text, date, now]
+    );
+}
+
 async function getStateLogs(attributeCode = null, startDate = null) {
     const database = await getDb();
     let query = 'SELECT * FROM attribute_state_logs';
@@ -46,5 +55,6 @@ async function getStateLogs(attributeCode = null, startDate = null) {
 
 module.exports = {
     logState,
-    getStateLogs
+    getStateLogs,
+    logManualSavoring
 };

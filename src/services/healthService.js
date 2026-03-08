@@ -109,13 +109,16 @@ async function getHeatmapData(requestedDate) {
             const dStr = d.toISOString().split('T')[0];
             const stats = dailyStats.get(dStr) || { calories: 0, protein: 0, habits: new Set(), workoutNote: null };
             
+            const isWorkout = stats.habits.has('workout');
+            const currentCalorieTarget = isWorkout ? targets.calories_warning : targets.calories_target;
+            
             const results = {
-                workout: stats.habits.has('workout'),
+                workout: isWorkout,
                 yoga: stats.habits.has('yoga'),
                 digitalSunset: stats.habits.has('digitalSunset'),
                 socialInteraction: stats.habits.has('socialInteraction'),
                 medication: stats.habits.has('medication'),
-                calories: (stats.calories > 0 && stats.calories <= targets.calories_target) ? 1 : (stats.calories > targets.calories_target && stats.calories <= targets.calories_warning ? 0.5 : 0),
+                calories: (stats.calories > 0 && stats.calories <= currentCalorieTarget) ? 1 : (stats.calories > currentCalorieTarget && stats.calories <= targets.calories_warning ? 0.5 : 0),
                 protein: (stats.protein >= targets.protein_target) ? 1 : (stats.protein > targets.protein_partial ? 0.5 : 0),
                 workoutNote: stats.workoutNote
             };
@@ -212,15 +215,32 @@ async function getStreaks() {
     const hasRecentData = rows.length > 0 && (rows[0].date === today || rows[0].date === yesterday);
 
     let foodLogStreak = 0;
-    let calorieStreak = 0;
-    let proteinStreak = 0;
 
     if (hasRecentData) {
         for (let i = 0; i < rows.length; i++) {
             if (i > 0 && !isDateConsecutive(rows[i-1].date, rows[i].date)) break;
             foodLogStreak++;
-            if (rows[i].calories <= targets.calories_target && rows[i].calories > 0) calorieStreak++;
-            if (rows[i].protein >= targets.protein_target) proteinStreak++;
+        }
+    }
+
+    // Use heatmap data for accurate, safety-day-aware streaks
+    const heatmap = await getHeatmapData(today);
+    const todayData = heatmap.find(d => d.date === today);
+    const yesterdayData = heatmap.find(d => d.date === yesterday);
+
+    let calorieStreak = 0;
+    let proteinStreak = 0;
+
+    if (todayData && todayData.streaks) {
+        calorieStreak = Math.abs(todayData.streaks.calories || 0);
+        proteinStreak = Math.abs(todayData.streaks.protein || 0);
+        
+        // If today is an active "miss" (0) but hasn't been logged yet, fall back to yesterday's streak
+        if (calorieStreak === 0 && yesterdayData && yesterdayData.streaks) {
+            calorieStreak = Math.abs(yesterdayData.streaks.calories || 0);
+        }
+        if (proteinStreak === 0 && yesterdayData && yesterdayData.streaks) {
+            proteinStreak = Math.abs(yesterdayData.streaks.protein || 0);
         }
     }
 

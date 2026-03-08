@@ -50,6 +50,15 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
   const [heatmapDate, setHeatmapDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const { isDark } = useDarkMode();
 
+  // Modal States
+  const [isMoodModalOpen, setIsMoodModalOpen] = useState(false);
+  const [moodScore, setMoodScore] = useState(5);
+  const [moodContext, setMoodContext] = useState('');
+  const [moodSocial, setMoodSocial] = useState('Alone');
+
+  const [isGratitudeModalOpen, setIsGratitudeModalOpen] = useState(false);
+  const [gratitudeText, setGratitudeText] = useState('');
+
   useEffect(() => {
     const fetchHabits = async () => {
       const res = await api.getHabits(ritualDate);
@@ -65,6 +74,30 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
     };
     fetchHeatmap();
   }, [heatmapDate]);
+
+  const handleMoodSubmit = async () => {
+    try {
+      await api.logState('WEL', moodScore, moodContext, 'Auto', moodSocial);
+      setIsMoodModalOpen(false);
+      setMoodScore(5);
+      setMoodContext('');
+      setMoodSocial('Alone');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleGratitudeSubmit = async () => {
+    try {
+      if (gratitudeText.trim()) {
+        await api.logManualSavoring(gratitudeText, ritualDate);
+        setIsGratitudeModalOpen(false);
+        setGratitudeText('');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const toggleHabit = async (key: string) => {
     if (!habits) return;
@@ -260,6 +293,24 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
           </div>
         </div>
 
+        {/* Quick Actions */}
+        <div className="lg:col-span-2 flex flex-wrap gap-3">
+          <button 
+            onClick={() => setIsMoodModalOpen(true)}
+            className="flex-1 bg-cozy-panel border-2 border-cozy-border hover:border-cozy-accent hover:shadow-[0_4px_0_0_var(--cozy-accent)] text-cozy-text px-4 py-3 rounded-2xl transition-all font-bold flex items-center justify-center gap-3 group"
+          >
+            <span className="noto-emoji text-xl group-hover:scale-110 transition-transform">{M('🧠')}</span>
+            <span>Log Mood</span>
+          </button>
+          <button 
+            onClick={() => setIsGratitudeModalOpen(true)}
+            className="flex-1 bg-cozy-panel border-2 border-cozy-border hover:border-cozy-gold hover:shadow-[0_4px_0_0_var(--cozy-gold)] text-cozy-text px-4 py-3 rounded-2xl transition-all font-bold flex items-center justify-center gap-3 group"
+          >
+            <span className="noto-emoji text-xl group-hover:scale-110 transition-transform">{M('✨')}</span>
+            <span>Log Gratitude</span>
+          </button>
+        </div>
+
         {/* Habits Checklist */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-cozy-accent p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] text-white shadow-[0_10px_0_0_var(--cozy-accent-dark)] mb-6 sm:mb-8 relative overflow-hidden">
@@ -330,6 +381,78 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
           </div>
         </div>
       </div>
+
+      {/* Mood Audit Modal */}
+      {isMoodModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-cozy-panel p-6 sm:p-8 rounded-3xl border-2 border-cozy-border max-w-md w-full shadow-2xl animate-pop">
+            <h3 className="text-xl font-bold mb-2">Energy & Mood Audit</h3>
+            <p className="text-sm text-cozy-text-dim mb-6">Track what gives you energy (Radiators) vs. what takes it away (Drains).</p>
+            
+            <div className="space-y-6 mb-8">
+              <div>
+                <label className="flex justify-between text-sm font-bold mb-2 text-cozy-text">
+                  <span>Current Energy/Mood (1-10)</span>
+                  <span className="text-cozy-accent">{moodScore}</span>
+                </label>
+                <input 
+                  type="range" min="1" max="10" 
+                  value={moodScore} onChange={(e) => setMoodScore(parseInt(e.target.value))}
+                  className="w-full accent-cozy-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-2 text-cozy-text">What are you doing right now?</label>
+                <input 
+                  type="text" placeholder="e.g., Reading, Working, Scrolling..." 
+                  value={moodContext} onChange={(e) => setMoodContext(e.target.value)}
+                  className="w-full p-3 bg-cozy-bg border-2 border-cozy-border rounded-xl font-bold text-sm focus:border-cozy-accent outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-2 text-cozy-text">Social Context</label>
+                <select 
+                  value={moodSocial} onChange={(e) => setMoodSocial(e.target.value)}
+                  className="w-full p-3 bg-cozy-bg border-2 border-cozy-border rounded-xl font-bold text-sm focus:border-cozy-accent outline-none transition-colors"
+                >
+                  <option value="Alone">Alone</option>
+                  <option value="Partner">With Partner</option>
+                  <option value="Friends">With Friends</option>
+                  <option value="Family">With Family</option>
+                  <option value="Colleagues">With Colleagues</option>
+                  <option value="Strangers/Public">Public / Strangers</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setIsMoodModalOpen(false)} className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-border text-cozy-text hover:bg-cozy-bg-alt transition-colors">Cancel</button>
+              <button onClick={handleMoodSubmit} className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-accent bg-cozy-accent text-white shadow-[0_4px_0_0_var(--cozy-accent-dark)] active:shadow-none active:translate-y-1 transition-all">Log Energy</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gratitude / Savoring Modal */}
+      {isGratitudeModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-cozy-panel p-6 sm:p-8 rounded-3xl border-2 border-cozy-gold max-w-md w-full shadow-2xl animate-pop">
+            <h3 className="text-xl font-bold mb-2 text-cozy-gold flex items-center gap-2"><span className="noto-emoji">{M('✨')}</span> Savor the Good</h3>
+            <p className="text-sm text-cozy-text-dim mb-6">Train your brain to scan for positive experiences. What is one specific good thing that happened today?</p>
+            
+            <textarea 
+              value={gratitudeText} onChange={(e) => setGratitudeText(e.target.value)}
+              placeholder="e.g., The coffee tasted especially good this morning, or my partner hugged me..."
+              className="w-full h-32 p-4 bg-cozy-bg border-2 border-cozy-border rounded-xl font-bold text-sm focus:border-cozy-gold outline-none transition-colors mb-6 resize-none"
+            />
+
+            <div className="flex gap-3">
+              <button onClick={() => setIsGratitudeModalOpen(false)} className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-border text-cozy-text hover:bg-cozy-bg-alt transition-colors">Cancel</button>
+              <button onClick={handleGratitudeSubmit} disabled={!gratitudeText.trim()} className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-gold bg-cozy-gold text-white shadow-[0_4px_0_0_rgba(251,191,36,0.5)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Log Gratitude</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

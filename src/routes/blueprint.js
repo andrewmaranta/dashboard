@@ -27,6 +27,16 @@ router.get('/state-logs', async (req, res) => {
     }
 });
 
+router.post('/manual-savoring', async (req, res) => {
+    try {
+        const { text, date } = req.body;
+        const result = await stateLogService.logManualSavoring(text, date);
+        res.json({ success: true, id: result.lastID });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Interoceptive Logs (Somatic Awareness)
 router.post('/interoceptive-logs', async (req, res) => {
     try {

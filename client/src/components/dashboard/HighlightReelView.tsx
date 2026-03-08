@@ -100,6 +100,81 @@ export const HighlightReelView: React.FC = () => {
         </div>
       </div>
 
+      {/* Gratitude Logs (Three Good Things) */}
+      <div className="space-y-6 pt-6 border-t-2 border-cozy-border">
+        <div className="flex items-center gap-3 mb-6 px-2">
+          <div className="p-2 bg-cozy-gold/10 rounded-xl text-cozy-gold">
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-cozy-text-dark">Savoring the Good</h3>
+            <p className="text-xs font-bold text-cozy-text-dim uppercase tracking-widest mt-1">Daily Gratitude & Positive Evidence</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {data?.gratitudeLogs?.length > 0 ? (
+            data.gratitudeLogs.map((log: any) => (
+              <div key={log.id} className="bg-cozy-panel p-5 rounded-2xl border-2 border-cozy-gold/30 shadow-sm flex items-start gap-4 group hover:border-cozy-gold/60 transition-colors">
+                <div className="w-10 h-10 bg-cozy-gold/10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl border border-cozy-gold/20 group-hover:scale-110 transition-transform">
+                  <span className="noto-emoji">{M('✨')}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-cozy-text leading-relaxed italic">
+                    "{log.text}"
+                  </p>
+                  <p className="text-[10px] font-bold text-cozy-text-dim uppercase tracking-widest mt-3">
+                    {new Date(log.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full p-8 border-2 border-dashed border-cozy-border rounded-[2rem] text-center space-y-3 opacity-50">
+              <span className="noto-emoji text-3xl">{M('✨')}</span>
+              <p className="text-sm font-bold text-cozy-text-dim italic">No gratitude logs found yet. Start logging from the Rituals tab.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* High-Mood/Energy Moments */}
+      <div className="space-y-6 pt-6 border-t-2 border-cozy-border">
+        <div className="flex items-center gap-3 mb-6 px-2">
+          <div className="p-2 bg-rose-500/10 rounded-xl text-rose-500">
+            <Zap size={20} />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-cozy-text-dark">Peak Energy States</h3>
+            <p className="text-xs font-bold text-cozy-text-dim uppercase tracking-widest mt-1">Activities That Radiate Happiness</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-4">
+          {data?.highMoodStates?.length > 0 ? (
+            data.highMoodStates.map((state: any) => (
+              <div key={state.id} className="bg-cozy-panel px-4 py-3 rounded-2xl border-2 border-rose-500/30 flex items-center gap-4 hover:border-rose-500/60 transition-colors">
+                <div className="w-8 h-8 bg-rose-500/10 rounded-xl flex items-center justify-center font-bold text-rose-600 text-xs">
+                  {state.value}/10
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-cozy-text leading-tight">
+                    {state.context || 'Unknown Activity'} 
+                  </p>
+                  <p className="text-[9px] font-bold text-cozy-text-dim uppercase tracking-widest mt-1">
+                    {state.social_context || 'Alone'} • {new Date(state.timestamp).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="w-full p-6 border-2 border-dashed border-cozy-border rounded-2xl text-center opacity-50">
+              <p className="text-sm font-bold text-cozy-text-dim italic">No high-energy moments logged yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* AI Pattern Recognition */}
       <div className="space-y-4 pt-6 border-t-2 border-cozy-border">
         <div className="flex items-center gap-3 mb-6 px-2">

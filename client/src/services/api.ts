@@ -86,11 +86,11 @@ export const api = {
     return res.json();
   },
 
-  toggleTask: async (id: number): Promise<void> => {
+  toggleTask: async (id: number, suds_before?: number, suds_after?: number): Promise<void> => {
     await fetch(`${API_BASE}/api/tasks/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id, suds_before, suds_after })
     });
   },
 
@@ -165,6 +165,14 @@ export const api = {
     const res = await fetch(`${API_BASE}/api/blueprint/interoceptive-logs${query}`);
     if (!res.ok) throw new Error('Failed to fetch interoceptive logs');
     return res.json();
+  },
+
+  logManualSavoring: async (text: string, date: string): Promise<void> => {
+    await fetch(`${API_BASE}/api/blueprint/manual-savoring`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, date })
+    });
   },
 
   // Beliefs

@@ -43,10 +43,27 @@ async function getSavoringData() {
         LIMIT 5
     `);
 
+    // 4. Get Manual Gratitude Logs (Three Good Things)
+    const gratitudeLogs = await database.all(`
+        SELECT * FROM manual_savoring_logs
+        ORDER BY created_at DESC
+        LIMIT 10
+    `);
+
+    // 5. Get recent high-mood/energy states
+    const highMoodStates = await database.all(`
+        SELECT * FROM attribute_state_logs
+        WHERE attribute_code = 'WEL' AND value >= 7
+        ORDER BY timestamp DESC
+        LIMIT 5
+    `);
+
     return {
         completedTasks,
         topStreaks,
-        aiInsights
+        aiInsights,
+        gratitudeLogs,
+        highMoodStates
     };
 }
 

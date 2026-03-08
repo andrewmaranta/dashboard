@@ -78,8 +78,8 @@ router.post('/tasks/archive-completed', async (req, res) => {
 
 router.post('/tasks/toggle', async (req, res) => {
     try {
-        const { id } = req.body;
-        const result = await taskService.toggleTask(id, req.io);
+        const { id, suds_before, suds_after } = req.body;
+        const result = await taskService.toggleTask(id, req.io, suds_before, suds_after);
         const tasks = await taskService.getTasks();
         req.io.emit('tasksUpdated', tasks);
         

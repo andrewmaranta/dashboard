@@ -43,6 +43,7 @@ const NumberStepper = ({ value, onChange, step = 1, min = 0, max = 999, color = 
 export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
   const { healthStats } = data;
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [workoutToday, setWorkoutToday] = useState(false);
   const [bpData, setBpData] = useState<BloodPressureData | null>(null);
   const [sleepHistory, setSleepHistory] = useState<SleepEntry[]>([]);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -67,11 +68,17 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
   const latest = healthStats[healthStats.length - 1] || { weight: '-', bodyFat: '-' };
 
   useEffect(() => {
-    const fetchMeals = async () => {
-      const data = await api.getMeals(selectedDate);
-      setMeals(data);
+    const fetchData = async () => {
+      try {
+        const [mealsData, habitsData] = await Promise.all([
+          api.getMeals(selectedDate),
+          api.getHabits(selectedDate)
+        ]);
+        setMeals(mealsData);
+        setWorkoutToday(!!habitsData?.workout);
+      } catch (e) { console.error(e); }
     };
-    fetchMeals();
+    fetchData();
   }, [selectedDate]);
 
   useEffect(() => {
@@ -125,6 +132,9 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
   const totalProtein = meals.reduce((sum, m) => sum + m.protein, 0);
   const totalFiber = meals.reduce((sum, m) => sum + (m.fiber || 0), 0);
 
+  const targetCals = workoutToday ? 1700 : 1500;
+  const targetProtein = 150;
+
   return (
     <div className="space-y-6 sm:space-y-10 animate-pop">
       
@@ -153,7 +163,9 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
             <span className="text-[8px] sm:text-[10px] text-cozy-text-dim uppercase tracking-widest font-bold mb-1 sm:mb-2">Calories</span>
             <div className="flex items-center gap-1 sm:gap-2">
               <span className="noto-emoji text-xl sm:text-2xl">{M('🔥')}</span>
-              <span className={`text-xl sm:text-3xl font-bold tracking-tighter ${totalCals > 1500 ? 'text-cozy-warm' : 'text-cozy-accent'}`}>{totalCals}</span>
+              <span className={`text-xl sm:text-3xl font-bold tracking-tighter ${totalCals > targetCals ? 'text-cozy-warm' : 'text-cozy-accent'}`}>
+                {totalCals} <span className="text-sm text-cozy-text-dim font-medium tracking-normal">/ {targetCals}</span>
+              </span>
             </div>
           </div>
           <div className="w-0.5 h-10 sm:h-12 bg-cozy-bg-alt"></div>
@@ -161,7 +173,9 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
             <span className="text-[8px] sm:text-[10px] text-cozy-text-dim uppercase tracking-widest font-bold mb-1 sm:mb-2">Protein</span>
             <div className="flex items-center gap-1 sm:gap-2">
               <span className="noto-emoji text-xl sm:text-2xl">{M('⚡')}</span>
-              <span className={`text-xl sm:text-3xl font-bold tracking-tighter ${totalProtein >= 120 ? 'text-cozy-accent' : 'text-cozy-warm'}`}>{totalProtein}<small className="text-xs sm:text-sm">g</small></span>
+              <span className={`text-xl sm:text-3xl font-bold tracking-tighter ${totalProtein >= targetProtein ? 'text-cozy-accent' : 'text-cozy-warm'}`}>
+                {totalProtein}<small className="text-xs sm:text-sm">g</small> <span className="text-sm text-cozy-text-dim font-medium tracking-normal">/ {targetProtein}g</span>
+              </span>
             </div>
           </div>
           <div className="w-0.5 h-10 sm:h-12 bg-cozy-bg-alt"></div>

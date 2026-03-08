@@ -18,6 +18,8 @@ export interface Task {
   difficulty?: string;
   if_then?: string;
   belief_id?: number;
+  suds_before?: number;
+  suds_after?: number;
   steps?: { text: string; completed: boolean; distress: number }[];
 }
 

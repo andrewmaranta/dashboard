@@ -79,7 +79,11 @@ export const useDashboardData = () => {
     socket.on('habitUpdated', () => fetchData());
     socket.on('healthUpdated', () => fetchData()); // Or specific update logic
     socket.on('financeUpdated', () => fetchData());
-    socket.on('questUpdated', () => fetchData());
+    socket.on('questsUpdated', () => fetchData());
+    socket.on('goalsUpdated', () => fetchData());
+    socket.on('targetsUpdated', () => fetchData());
+    socket.on('healthStatsUpdated', () => fetchData());
+    socket.on('sleepUpdated', () => fetchData());
     socket.on('tasksUpdated', () => fetchData());
     socket.on('xpGainedV2', (data: { amount: number, attribute: string }) => {
       setXpNotifications(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), ...data }]);
@@ -99,7 +103,11 @@ export const useDashboardData = () => {
       socket.off('habitUpdated');
       socket.off('healthUpdated');
       socket.off('financeUpdated');
-      socket.off('questUpdated');
+      socket.off('questsUpdated');
+      socket.off('goalsUpdated');
+      socket.off('targetsUpdated');
+      socket.off('healthStatsUpdated');
+      socket.off('sleepUpdated');
       socket.off('tasksUpdated');
       socket.off('xpGainedV2');
       socket.off('levelUp');

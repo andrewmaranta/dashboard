@@ -45,6 +45,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
   const [newStepText, setNewStepText] = useState('');
   const [newStepDistress, setNewStepDistress] = useState(1);
 
+  // SUDS Modal State
+  const [sudsModalTask, setSudsModalTask] = useState<Task | null>(null);
+  const [sudsBefore, setSudsBefore] = useState(50);
+  const [sudsAfter, setSudsAfter] = useState(50);
+
   // Edit State
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editTaskText, setEditTaskText] = useState('');
@@ -120,12 +125,26 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
     } catch (e) { console.error(e); }
   };
 
-  const handleToggleTask = async (id: number) => {
-    try { 
-      await api.toggleTask(id); 
-    } catch (e) { console.error(e); }
-  };
-
+    const handleToggleTask = async (task: Task) => {
+      if (!task.completed) {
+        setSudsModalTask(task);
+        setSudsBefore(50);
+        setSudsAfter(50);
+        return;
+      }
+  
+      try {
+        await api.toggleTask(task.id);
+      } catch (e) { console.error(e); }
+    };
+  
+    const handleSudsSubmit = async () => {
+      if (!sudsModalTask) return;
+      try {
+        await api.toggleTask(sudsModalTask.id, sudsBefore, sudsAfter);
+        setSudsModalTask(null);
+      } catch (e) { console.error(e); }
+    };
   const handleToggleStep = async (task: Task, stepIndex: number) => {
     const updatedSteps = [...(task.steps || [])];
     updatedSteps[stepIndex].completed = !updatedSteps[stepIndex].completed;
@@ -560,7 +579,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-3 sm:gap-6 w-full">
                         <button 
-                          onClick={() => handleToggleTask(task.id)} 
+                          onClick={() => handleToggleTask(task)} 
                           className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center border-2 transition-all ${
                             task.completed ? 'bg-cozy-accent border-cozy-accent text-white' : 'border-cozy-border text-transparent hover:border-cozy-accent'
                           }`}
@@ -655,6 +674,63 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* SUDS Tracking Modal */}
+      {sudsModalTask && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-cozy-panel p-6 sm:p-8 rounded-3xl border-2 border-cozy-border max-w-sm w-full shadow-2xl animate-pop">
+            <h3 className="text-xl font-bold mb-2">Track Comfort (SUDS)</h3>
+            <p className="text-sm text-cozy-text-dim mb-6">
+              Rate your distress or anxiety level before and after this activity (0 = completely calm, 100 = maximum panic).
+            </p>
+
+            <div className="space-y-6 mb-8">
+              <div>
+                <label className="flex justify-between text-sm font-bold mb-2 text-cozy-text">
+                  <span>Before Task</span>
+                  <span className="text-cozy-accent">{sudsBefore}</span>
+                </label>
+                <input 
+                  type="range" 
+                  min="0" max="100" 
+                  value={sudsBefore} 
+                  onChange={(e) => setSudsBefore(parseInt(e.target.value))}
+                  className="w-full accent-cozy-accent"
+                />
+              </div>
+
+              <div>
+                <label className="flex justify-between text-sm font-bold mb-2 text-cozy-text">
+                  <span>After Task</span>
+                  <span className="text-cozy-accent">{sudsAfter}</span>
+                </label>
+                <input 
+                  type="range" 
+                  min="0" max="100" 
+                  value={sudsAfter} 
+                  onChange={(e) => setSudsAfter(parseInt(e.target.value))}
+                  className="w-full accent-cozy-accent"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setSudsModalTask(null)}
+                className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-border text-cozy-text hover:bg-cozy-bg-alt transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSudsSubmit}
+                className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-accent bg-cozy-accent text-white shadow-[0_4px_0_0_var(--cozy-accent-dark)] active:shadow-none active:translate-y-1 transition-all"
+              >
+                Complete Task
+              </button>
+            </div>
           </div>
         </div>
       )}
