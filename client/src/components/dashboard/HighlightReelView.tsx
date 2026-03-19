@@ -63,8 +63,12 @@ export const HighlightReelView: React.FC = () => {
               </div>
             ))
           ) : (
-             <div className="p-6 border-2 border-dashed border-cozy-border rounded-2xl text-center">
-               <p className="text-sm font-bold text-cozy-text-dim italic">No hard/epic quests completed recently.</p>
+             <div className="p-8 border-2 border-dashed border-cozy-border rounded-3xl space-y-3 opacity-60 hover:opacity-100 transition-opacity duration-300 flex flex-col items-start text-left">
+               <div className="w-12 h-12 bg-cozy-bg-alt rounded-2xl flex items-center justify-center">
+                 <span className="noto-emoji text-2xl animate-wiggle inline-block">{M('⚔')}</span>
+               </div>
+               <p className="text-sm font-bold text-cozy-text-muted">The realm is quiet.</p>
+               <p className="text-[10px] uppercase font-bold tracking-widest text-cozy-text-dim">No epic quests completed recently.</p>
              </div>
           )}
         </div>
@@ -91,8 +95,12 @@ export const HighlightReelView: React.FC = () => {
                 </div>
               ))
             ) : (
-              <div className="p-6 border-2 border-dashed border-cozy-border rounded-2xl text-center">
-                 <p className="text-sm font-bold text-cozy-text-dim italic">No major streaks active.</p>
+              <div className="p-8 border-2 border-dashed border-cozy-border rounded-3xl space-y-3 opacity-60 hover:opacity-100 transition-opacity duration-300 flex flex-col items-start text-left">
+                <div className="w-12 h-12 bg-cozy-gold/10 rounded-2xl flex items-center justify-center">
+                  <span className="noto-emoji text-2xl opacity-50">{M('🔥')}</span>
+                </div>
+                <p className="text-sm font-bold text-cozy-text-muted">No fires burning yet.</p>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-cozy-text-dim">Start a habit to ignite a streak.</p>
               </div>
             )}
           </div>
@@ -130,9 +138,12 @@ export const HighlightReelView: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="col-span-full p-8 border-2 border-dashed border-cozy-border rounded-[2rem] text-center space-y-3 opacity-50">
-              <span className="noto-emoji text-3xl">{M('✨')}</span>
-              <p className="text-sm font-bold text-cozy-text-dim italic">No gratitude logs found yet. Start logging from the Rituals tab.</p>
+            <div className="col-span-full p-8 border-2 border-dashed border-cozy-border rounded-[2rem] space-y-3 opacity-60 hover:opacity-100 transition-opacity duration-300 flex flex-col items-start text-left">
+              <div className="w-12 h-12 bg-cozy-gold/10 rounded-2xl flex items-center justify-center">
+                <span className="noto-emoji text-2xl animate-pulse">{M('✨')}</span>
+              </div>
+              <p className="text-sm font-bold text-cozy-text-muted">Awaiting good things.</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-cozy-text-dim">Log gratitude in the Rituals tab.</p>
             </div>
           )}
         </div>
@@ -168,8 +179,12 @@ export const HighlightReelView: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="w-full p-6 border-2 border-dashed border-cozy-border rounded-2xl text-center opacity-50">
-              <p className="text-sm font-bold text-cozy-text-dim italic">No high-energy moments logged yet.</p>
+            <div className="w-full p-8 border-2 border-dashed border-cozy-border rounded-[2rem] space-y-3 opacity-60 hover:opacity-100 transition-opacity duration-300 flex flex-col items-start text-left">
+              <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center">
+                <span className="noto-emoji text-2xl opacity-50">{M('🔋')}</span>
+              </div>
+              <p className="text-sm font-bold text-cozy-text-muted">No radiators found.</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-cozy-text-dim">Log high-energy moments to see patterns.</p>
             </div>
           )}
         </div>

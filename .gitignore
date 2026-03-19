@@ -7,3 +7,4 @@ client/dist/
 *.log
 *.sqlite
 focus.sqlite
+.env

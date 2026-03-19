@@ -79,7 +79,7 @@ export const DensityUpdateModal: React.FC<DensityUpdateModalProps> = ({ onClose,
             </div>
             <button 
               onClick={onClose}
-              className="p-2 bg-cozy-bg-alt rounded-full text-cozy-text-muted hover:text-cozy-text-dark hover:bg-cozy-border transition-all shadow-sm"
+              className="cozy-button-icon !bg-cozy-bg-alt hover:!bg-cozy-border !rounded-full"
             >
               <X size={20} />
             </button>
@@ -95,14 +95,14 @@ export const DensityUpdateModal: React.FC<DensityUpdateModalProps> = ({ onClose,
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => adjustValue(attr.code, -1)}
-                    className="w-8 h-8 flex items-center justify-center bg-cozy-panel border-2 border-cozy-border rounded-xl text-cozy-text-muted hover:text-cozy-accent active:scale-95 transition-all shadow-sm"
+                    className="cozy-button-icon !bg-cozy-panel !border-2 !border-cozy-border !rounded-xl !shadow-sm"
                   >
                     <Minus size={16} />
                   </button>
                   <span className="w-6 text-center font-bold text-lg font-mono text-cozy-text-dark">{densities[attr.code]}</span>
                   <button 
                     onClick={() => adjustValue(attr.code, 1)}
-                    className="w-8 h-8 flex items-center justify-center bg-cozy-panel border-2 border-cozy-border rounded-xl text-cozy-text-muted hover:text-cozy-accent active:scale-95 transition-all shadow-sm"
+                    className="cozy-button-icon !bg-cozy-panel !border-2 !border-cozy-border !rounded-xl !shadow-sm"
                   >
                     <Plus size={16} />
                   </button>
@@ -124,7 +124,7 @@ export const DensityUpdateModal: React.FC<DensityUpdateModalProps> = ({ onClose,
           <button 
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full bg-cozy-accent text-white py-4 rounded-xl font-bold shadow-[0_4px_0_0_var(--cozy-accent-dark)] hover:opacity-90 active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
+            className="w-full cozy-button py-4 !shadow-[0_4px_0_0_var(--cozy-accent-dark)] disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
           >
             {isSubmitting ? 'Logging States...' : 'Update Densities'}
           </button>

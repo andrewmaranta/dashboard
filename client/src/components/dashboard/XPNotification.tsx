@@ -28,7 +28,7 @@ export const XPNotification: React.FC<XPNotificationProps> = ({ amount, attribut
   return (
     <div className="animate-slide-in-right pointer-events-auto">
       <div className="relative">
-        <div className={`bg-cozy-panel p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex items-center gap-4 sm:gap-6 group transition-all hover:border-cozy-accent overflow-hidden relative`}>
+        <div className={`bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex items-center gap-4 sm:gap-6 group transition-all hover:border-cozy-accent overflow-hidden relative`}>
           {/* Shimmer Effect */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-shimmer"></div>

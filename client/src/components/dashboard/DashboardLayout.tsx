@@ -8,11 +8,12 @@ import { ProjectsView } from './ProjectsView';
 import { AttributesView } from './AttributesView';
 import { BeliefsView } from './BeliefsView';
 import { ToolsView } from './ToolsView';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Mic } from 'lucide-react';
 import { XPNotification } from './XPNotification';
 import { LevelUpNotification } from './LevelUpNotification';
 import { FocusNotification } from './FocusNotification';
 import { DensityUpdateModal } from './DensityUpdateModal';
+import { OpenClawChat } from './OpenClawChat';
 
 // VS15 (\uFE0E) forces monochrome text presentation
 const M = (emoji: string) => `${emoji}\uFE0E`;
@@ -39,7 +40,22 @@ const getStatColor = (val: number) => {
 export const DashboardLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('activeTab') || 'daily');
   const [isDensityModalOpen, setIsDensityModalOpen] = useState(false);
+  const [isDictationModeOpen, setIsDictationModeOpen] = useState(() => {
+    // Auto-open on Android (often used for quick voice input)
+    return /Android/i.test(navigator.userAgent);
+  });
   const { isDark, toggle } = useDarkMode();
+
+  // Global hotkey to open Dictation Mode
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.metaKey) {
+        setIsDictationModeOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -63,6 +79,7 @@ export const DashboardLayout: React.FC = () => {
     removeXpNotification,
     removeLevelUpNotification,
     removeFocusNotification,
+    stopAudio,
     refetch
   } = useDashboardData();
 
@@ -82,28 +99,43 @@ export const DashboardLayout: React.FC = () => {
       <div className="max-w-6xl mx-auto py-4 px-4 sm:py-8 sm:px-6 space-y-6 sm:space-y-8 relative z-10">
         
         {/* Header */}
-        <header className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-6 animate-blur-in">
+        <header className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-6 animate-blur-in relative z-[110]">
           {/* Title and Date Column */}
-          <div className="flex flex-col items-center lg:items-start gap-2 bg-cozy-panel/60 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex-1 relative">
-            <button 
-              onClick={toggle}
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 sm:p-2.5 bg-cozy-bg-alt rounded-xl sm:rounded-2xl border-2 border-cozy-border text-cozy-accent hover:scale-110 transition-all shadow-[0_4px_0_0_var(--cozy-border)] active:shadow-none active:translate-y-1 z-10"
-            >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
+          <div className="flex flex-col items-center lg:items-start gap-2 bg-cozy-panel/60 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex-1 relative overflow-hidden">
+            {/* Header Action Bar - Responsive positioning */}
+            <div className="flex lg:absolute lg:top-6 lg:right-6 gap-2 mb-6 lg:mb-0 w-full lg:w-auto justify-end z-10">
+              <button 
+                onClick={() => setIsDictationModeOpen(!isDictationModeOpen)}
+                title="Toggle Dictation Mode"
+                className={`p-2.5 rounded-xl sm:rounded-2xl border-2 border-cozy-border transition-all shadow-[0_4px_0_0_var(--cozy-border)] active:shadow-none active:translate-y-1 ${
+                  isDictationModeOpen 
+                    ? 'bg-cozy-accent text-white border-cozy-accent shadow-[0_4px_0_0_rgba(235,94,85,0.4)]' 
+                    : 'bg-cozy-bg-alt text-cozy-accent'
+                }`}
+              >
+                <Mic size={20} />
+              </button>
+              <button 
+                onClick={toggle}
+                title="Toggle Theme"
+                className="p-2.5 bg-cozy-bg-alt rounded-xl sm:rounded-2xl border-2 border-cozy-border text-cozy-accent hover:scale-110 transition-all shadow-[0_4px_0_0_var(--cozy-border)] active:shadow-none active:translate-y-1"
+              >
+                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            </div>
 
-            <div className="flex items-center gap-4">
-              <span className="noto-emoji text-4xl sm:text-5xl">{M('🧭')}</span>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-cozy-text-dark tracking-tight">Life Tracker</h1>
-                <p className="text-xs sm:text-sm font-bold text-cozy-text-dim uppercase tracking-widest mt-1">
+            <div className="flex items-center gap-4 w-full justify-center lg:justify-start">
+              <span className="noto-emoji text-4xl sm:text-5xl flex-shrink-0">{M('🧭')}</span>
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-cozy-text-dark tracking-tight truncate">Life Tracker</h1>
+                <p className="text-[10px] sm:text-sm font-bold text-cozy-text-dim uppercase tracking-widest mt-1 truncate">
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Trait Density Grid (Replaces XP Bars) */}
+          {/* Trait Density Grid */}
           <div 
             className="bg-cozy-panel/60 p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex-shrink-0 lg:max-w-md w-full relative group cursor-pointer hover:border-cozy-accent transition-colors"
             onClick={() => setIsDensityModalOpen(true)}
@@ -151,14 +183,12 @@ export const DashboardLayout: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex flex-col gap-0.5">
-                        {/* State Mean Bar */}
                         <div className="h-2 sm:h-2.5 w-full bg-cozy-bg-alt rounded-full overflow-hidden border border-cozy-border shadow-inner p-[1px]">
                           <div 
                             className={`h-full rounded-full transition-all duration-1000 shadow-sm ${getStatColor(mean)}`}
                             style={{ width: `${(mean / 10) * 100}%` }}
                           ></div>
                         </div>
-                        {/* XP Bar */}
                         <div className="h-1 sm:h-1.5 w-full bg-cozy-bg-alt/50 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-cozy-accent rounded-full transition-all duration-1000"
@@ -183,10 +213,10 @@ export const DashboardLayout: React.FC = () => {
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={`
-                  flex items-center gap-2 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4 rounded-[1rem] sm:rounded-[1.5rem] transition-all whitespace-nowrap font-bold text-xs sm:text-sm
+                  px-4 py-3 sm:px-6 sm:py-4 rounded-[1.2rem] sm:rounded-[1.8rem] whitespace-nowrap text-xs sm:text-sm
                   ${isActive 
-                    ? 'bg-cozy-accent text-white shadow-[0_4px_0_0_var(--cozy-accent-dark)] scale-105' 
-                    : 'bg-cozy-panel text-cozy-text-muted hover:bg-cozy-bg-alt border-2 border-cozy-border shadow-[0_4px_0_0_var(--cozy-border)]'}
+                    ? 'cozy-button !scale-105' 
+                    : 'cozy-button-secondary !bg-cozy-panel !border-cozy-border hover:!border-cozy-accent/30'}
                 `}
               >
                 <span className="noto-emoji text-lg sm:text-xl leading-none">{tab.icon}</span>
@@ -205,8 +235,8 @@ export const DashboardLayout: React.FC = () => {
               tasks, 
               habits, 
               healthStats, 
-              finance: financeData, // Align with new requirement
-              financeData, // Keep for legacy
+              finance: financeData, 
+              financeData, 
               campaigns, 
               dailyStats,
               heatmap
@@ -255,6 +285,12 @@ export const DashboardLayout: React.FC = () => {
             onUpdated={refetch} 
           />
         )}
+
+        <OpenClawChat 
+          isOpen={isDictationModeOpen} 
+          onClose={() => setIsDictationModeOpen(false)} 
+          stopAudio={stopAudio}
+        />
 
         {/* Footer */}
         <footer className="text-center py-12 opacity-40">

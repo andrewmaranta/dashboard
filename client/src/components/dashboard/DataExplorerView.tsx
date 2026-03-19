@@ -39,7 +39,7 @@ export const DataExplorerView: React.FC = () => {
   return (
     <div className="space-y-6 sm:space-y-10 animate-pop">
       {/* Header / Table Selector */}
-      <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] sm:shadow-[0_12px_0_0_var(--cozy-border)]">
+      <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem]">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-cozy-bg-alt rounded-2xl sm:rounded-3xl flex items-center justify-center border-2 border-cozy-border text-cozy-accent">
@@ -67,7 +67,7 @@ export const DataExplorerView: React.FC = () => {
       </div>
 
       {/* Table Display */}
-      <div className="bg-cozy-panel p-4 sm:p-10 rounded-[1.5rem] sm:rounded-[3rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] sm:shadow-[0_12px_0_0_var(--cozy-border)] overflow-hidden">
+      <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] overflow-hidden">
         {loading ? (
           <div className="h-60 sm:h-80 flex flex-col items-center justify-center opacity-30">
             <span className="noto-emoji text-4xl sm:text-6xl animate-bounce mb-4">{M('⏳')}</span>

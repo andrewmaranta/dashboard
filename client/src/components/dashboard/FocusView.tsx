@@ -44,7 +44,7 @@ export const FocusView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12">
         
         {/* Timer Card */}
-        <div className="bg-cozy-panel p-6 sm:p-12 rounded-[2rem] sm:rounded-[3.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] sm:shadow-[0_12px_0_0_var(--cozy-border)] flex flex-col items-center relative overflow-hidden">
+        <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex flex-col items-center relative overflow-hidden">
           <h2 className="text-xl sm:text-3xl font-bold text-cozy-text-dark mb-6 sm:mb-12 flex items-center gap-2 sm:gap-3 relative z-10">
             <span className="noto-emoji text-2xl sm:text-3xl">{state.mode === 'work' ? M('⏳') : M('🍵')}</span>
             <div className="flex flex-col items-start">
@@ -86,8 +86,8 @@ export const FocusView: React.FC = () => {
           <div className="flex gap-4 sm:gap-6 mt-8 sm:mt-12 relative z-10">
             <button 
               onClick={toggleTimer}
-              className={`w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center transition-all shadow-[0_4px_0_0_var(--cozy-accent-dark)] sm:shadow-[0_6px_0_0_var(--cozy-accent-dark)] active:shadow-none active:translate-y-1 ${
-                state.isRunning ? 'bg-cozy-warm' : 'bg-cozy-accent text-white'
+              className={`cozy-button w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl !p-0 ${
+                state.isRunning ? '!bg-cozy-warm !shadow-[0_4px_0_0_#d97746]' : ''
               }`}
             >
               <span className="noto-emoji text-xl sm:text-3xl text-white">{state.isRunning ? M('⏸') : M('▶')}</span>
@@ -95,16 +95,16 @@ export const FocusView: React.FC = () => {
             
             <button 
               onClick={resetTimer}
-              className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-cozy-panel text-cozy-accent flex items-center justify-center border-2 border-cozy-border shadow-[0_4px_0_0_var(--cozy-border)] sm:shadow-[0_6px_0_0_var(--cozy-border)] hover:bg-cozy-bg-alt active:shadow-none active:translate-y-1 transition-all"
+              className="cozy-button-secondary w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl !p-0 !bg-cozy-panel !border-cozy-border hover:!border-cozy-accent/30"
             >
-              <span className="noto-emoji text-xl sm:text-3xl">{M('🔄')}</span>
+              <span className="noto-emoji text-xl sm:text-3xl text-cozy-accent">{M('🔄')}</span>
             </button>
 
             <button 
               onClick={() => setShowSettings(!showSettings)}
-              className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-cozy-panel text-cozy-text-dim flex items-center justify-center border-2 border-cozy-border shadow-[0_4px_0_0_var(--cozy-border)] sm:shadow-[0_6px_0_0_var(--cozy-border)] hover:bg-cozy-bg-alt active:shadow-none active:translate-y-1 transition-all"
+              className="cozy-button-secondary w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl !p-0 !bg-cozy-panel !border-cozy-border hover:!border-cozy-accent/30"
             >
-              <span className="noto-emoji text-xl sm:text-3xl">{M('⚙')}</span>
+              <span className="noto-emoji text-xl sm:text-3xl text-cozy-text-dim">{M('⚙')}</span>
             </button>
           </div>
 
@@ -135,7 +135,7 @@ export const FocusView: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-6 sm:space-y-8">
           {/* Break Bank */}
-          <div className="bg-cozy-panel p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] sm:shadow-[0_10px_0_0_var(--cozy-border)]">
+          <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-sm">
             <h3 className="text-xl sm:text-2xl font-bold text-cozy-text-dark mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
               <span className="noto-emoji text-xl sm:text-2xl">{M('🍵')}</span>
               Break Bank
@@ -150,12 +150,12 @@ export const FocusView: React.FC = () => {
             <button 
               onClick={state.mode === 'work' ? takeBreak : returnToWork}
               disabled={state.mode === 'work' && state.breaksEarned === 0}
-              className={`w-full py-4 sm:py-6 rounded-xl sm:rounded-2xl font-bold transition-all flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg ${
+              className={`w-full py-4 sm:py-6 text-base sm:text-lg ${
                 state.mode === 'break'
-                  ? 'bg-cozy-accent text-white shadow-[0_4px_0_0_var(--cozy-accent-dark)] sm:shadow-[0_6px_0_0_var(--cozy-accent-dark)] hover:opacity-90 active:shadow-none active:translate-y-1'
+                  ? 'cozy-button'
                   : state.breaksEarned > 0
-                  ? 'bg-cozy-warm text-white shadow-[0_4px_0_0_var(--cozy-accent-dark)] sm:shadow-[0_6px_0_0_var(--cozy-accent-dark)] hover:opacity-90 active:shadow-none active:translate-y-1'
-                  : 'bg-cozy-bg-alt text-cozy-text-dim cursor-not-allowed border-2 border-cozy-border'
+                  ? 'cozy-button !bg-cozy-warm !shadow-[0_4px_0_0_#d97746]'
+                  : 'bg-cozy-bg-alt text-cozy-text-dim cursor-not-allowed border-2 border-cozy-border rounded-xl sm:rounded-2xl font-bold'
               }`}
             >
               <span className="noto-emoji text-xl sm:text-2xl">{state.mode === 'work' ? M('🍵') : M('⏳')}</span>
@@ -164,7 +164,7 @@ export const FocusView: React.FC = () => {
           </div>
 
           {/* History */}
-          <div className="bg-cozy-panel p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] sm:shadow-[0_10px_0_0_var(--cozy-border)] flex-1">
+          <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-sm flex-1">
             <h3 className="text-xl sm:text-2xl font-bold text-cozy-text-dark mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                <span className="noto-emoji text-xl sm:text-2xl">{M('📖')}</span>
                Past Focus

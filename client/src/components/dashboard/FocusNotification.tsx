@@ -23,7 +23,7 @@ export const FocusNotification: React.FC<FocusNotificationProps> = ({ type, dura
   return (
     <div className="animate-slide-in-right pointer-events-auto">
       <div className="relative">
-        <div className={`bg-cozy-panel p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex items-center gap-4 sm:gap-6 group transition-all hover:border-cozy-accent overflow-hidden relative`}>
+        <div className={`bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex items-center gap-4 sm:gap-6 group transition-all hover:border-cozy-accent overflow-hidden relative`}>
           <div className={`w-12 h-12 sm:w-16 sm:h-16 ${bg} rounded-2xl sm:rounded-3xl border-2 border-transparent flex items-center justify-center relative flex-shrink-0 z-10 overflow-hidden`}>
              <span className="noto-emoji text-2xl sm:text-4xl block leading-none relative z-10">{icon}</span>
           </div>

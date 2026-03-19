@@ -24,12 +24,12 @@ const HABIT_METADATA: Record<string, { label: string, icon: string, color: strin
 };
 
 const ATTR_COLORS: Record<string, string> = {
-  PWR: 'bg-[#d68060]/10 text-[#d68060]', // Terracotta
-  DSC: 'bg-[#e9c46a]/15 text-[#c7a24b]', // Gold
-  VIT: 'bg-[#fb7185]/10 text-[#e11d48]', // Rose
-  KNW: 'bg-[#818cf8]/10 text-[#4f46e5]', // Indigo
-  WEL: 'bg-[#8da08e]/20 text-[#6e7f6f]', // Sage
-  SOC: 'bg-[#fbbf24]/10 text-[#b45309]', // Amber
+  PWR: 'bg-[var(--cozy-stat-power)]/10 text-[var(--cozy-stat-power)]',
+  DSC: 'bg-[var(--cozy-stat-discipline)]/15 text-[var(--cozy-stat-discipline)]',
+  VIT: 'bg-[var(--cozy-stat-vitality)]/10 text-[var(--cozy-stat-vitality)]',
+  KNW: 'bg-[var(--cozy-stat-knowledge)]/10 text-[var(--cozy-stat-knowledge)]',
+  WEL: 'bg-[var(--cozy-stat-wellness)]/20 text-[var(--cozy-stat-wellness)]',
+  SOC: 'bg-[var(--cozy-stat-social)]/10 text-[var(--cozy-stat-social)]',
 };
 
 const HEATMAP_ROWS = [
@@ -117,8 +117,8 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
         const idx = types.indexOf(currentType || '');
         if (idx === -1 || idx === types.length - 1) {
           // Last type or unknown -> Off
-          // Pass currentType to toggle it OFF
-          note = currentType || 'Logged via Dashboard';
+          // Set note to currentType (or undefined if null) to trigger deletion in backend
+          note = currentType || undefined;
         } else {
           // Next type
           note = types[idx + 1];
@@ -228,14 +228,14 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-10">
         
         {/* Heatmap Card */}
-        <div className="lg:col-span-3 bg-cozy-panel p-5 sm:p-10 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_10px_0_0_var(--cozy-border)] overflow-hidden">
+        <div className="lg:col-span-3 bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] overflow-hidden">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-10">
             <h3 className="text-xl sm:text-2xl font-bold text-cozy-text-dark flex items-center gap-3">
               Weekly Rhythm
             </h3>
             
             <div className="flex items-center gap-2 bg-cozy-bg-alt rounded-xl sm:rounded-2xl p-1.5 sm:p-2 border-2 border-cozy-border w-full sm:w-auto justify-between sm:justify-start">
-              <button onClick={() => changeHeatmapWeek(-1)} className="p-1 sm:p-1.5 hover:bg-cozy-panel rounded-xl transition-all"><ChevronLeft size={18} className="text-cozy-accent" /></button>
+              <button onClick={() => changeHeatmapWeek(-1)} className="cozy-button-icon !p-1 sm:!p-1.5 !rounded-xl !bg-transparent hover:!bg-cozy-panel"><ChevronLeft size={18} className="text-cozy-accent" /></button>
               <div className="relative flex items-center">
                 <input 
                   type="date" 
@@ -247,12 +247,12 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
                   Week of {format(new Date(heatmapDate + 'T12:00:00'), 'MMM d')}
                 </span>
               </div>
-              <button onClick={() => changeHeatmapWeek(1)} className="p-1 sm:p-1.5 hover:bg-cozy-panel rounded-xl transition-all"><ChevronRight size={18} className="text-cozy-accent" /></button>
+              <button onClick={() => changeHeatmapWeek(1)} className="cozy-button-icon !p-1 sm:!p-1.5 !rounded-xl !bg-transparent hover:!bg-cozy-panel"><ChevronRight size={18} className="text-cozy-accent" /></button>
             </div>
           </div>
           
           <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
-            <div className="min-w-[450px] space-y-2 sm:space-y-3">
+            <div className="w-full min-w-[320px] sm:min-w-[450px] space-y-2 sm:space-y-3">
               <div className="flex mb-4">
                 <div className="w-20 sm:w-24"></div>
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
@@ -293,25 +293,6 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="lg:col-span-2 flex flex-wrap gap-3">
-          <button 
-            onClick={() => setIsMoodModalOpen(true)}
-            className="flex-1 bg-cozy-panel border-2 border-cozy-border hover:border-cozy-accent hover:shadow-[0_4px_0_0_var(--cozy-accent)] text-cozy-text px-4 py-3 rounded-2xl transition-all font-bold flex items-center justify-center gap-3 group"
-          >
-            <span className="noto-emoji text-xl group-hover:scale-110 transition-transform">{M('🧠')}</span>
-            <span>Log Mood</span>
-          </button>
-          <button 
-            onClick={() => setIsGratitudeModalOpen(true)}
-            className="flex-1 bg-cozy-panel border-2 border-cozy-border hover:border-cozy-gold hover:shadow-[0_4px_0_0_var(--cozy-gold)] text-cozy-text px-4 py-3 rounded-2xl transition-all font-bold flex items-center justify-center gap-3 group"
-          >
-            <span className="noto-emoji text-xl group-hover:scale-110 transition-transform">{M('✨')}</span>
-            <span>Log Gratitude</span>
-          </button>
-        </div>
-
-        {/* Habits Checklist */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-cozy-accent p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] text-white shadow-[0_10px_0_0_var(--cozy-accent-dark)] mb-6 sm:mb-8 relative overflow-hidden">
             <div className="flex justify-between items-start relative z-10">
@@ -353,10 +334,10 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
                 <button
                   key={key}
                   onClick={() => toggleHabit(key)}
-                  className={`w-full flex items-center justify-between p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all ${
+                  className={`cozy-habit-button ${
                     isDone 
                       ? 'bg-cozy-panel border-cozy-accent shadow-[0_6px_0_0_var(--cozy-accent)] -translate-y-1' 
-                      : 'bg-cozy-panel border-cozy-border shadow-[0_4px_0_0_var(--cozy-border)] hover:-translate-y-0.5 hover:shadow-[0_5px_0_0_var(--cozy-border)] hover:border-cozy-text-dim/30'
+                      : 'bg-cozy-panel border-cozy-border shadow-[0_4px_0_0_var(--cozy-border)] hover:-translate-y-0.5 hover:shadow-[0_5px_0_0_var(--cozy-border)] hover:border-cozy-accent/30'
                   }`}
                 >
                   <div className="flex items-center gap-3 sm:gap-4">
@@ -378,6 +359,24 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
                 </button>
               );
             })}
+          </div>
+
+          {/* Quick Actions (Moved below habits for better flow) */}
+          <div className="flex flex-wrap gap-3 pt-4">
+            <button 
+              onClick={() => setIsMoodModalOpen(true)}
+              className="flex-1 cozy-button-secondary !bg-cozy-panel !border-cozy-border hover:!border-cozy-accent hover:!shadow-[0_4px_0_0_var(--cozy-accent)] px-4 py-3 group"
+            >
+              <span className="noto-emoji text-xl group-hover:scale-110 transition-transform">{M('🧠')}</span>
+              <span>Log Mood</span>
+            </button>
+            <button 
+              onClick={() => setIsGratitudeModalOpen(true)}
+              className="flex-1 cozy-button-secondary !bg-cozy-panel !border-cozy-border hover:!border-cozy-gold hover:!shadow-[0_4px_0_0_var(--cozy-gold)] px-4 py-3 group"
+            >
+              <span className="noto-emoji text-xl group-hover:scale-110 transition-transform">{M('✨')}</span>
+              <span>Log Gratitude</span>
+            </button>
           </div>
         </div>
       </div>
@@ -406,14 +405,14 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
                 <input 
                   type="text" placeholder="e.g., Reading, Working, Scrolling..." 
                   value={moodContext} onChange={(e) => setMoodContext(e.target.value)}
-                  className="w-full p-3 bg-cozy-bg border-2 border-cozy-border rounded-xl font-bold text-sm focus:border-cozy-accent outline-none transition-colors"
+                  className="cozy-input"
                 />
               </div>
               <div>
                 <label className="block text-sm font-bold mb-2 text-cozy-text">Social Context</label>
                 <select 
                   value={moodSocial} onChange={(e) => setMoodSocial(e.target.value)}
-                  className="w-full p-3 bg-cozy-bg border-2 border-cozy-border rounded-xl font-bold text-sm focus:border-cozy-accent outline-none transition-colors"
+                  className="cozy-input"
                 >
                   <option value="Alone">Alone</option>
                   <option value="Partner">With Partner</option>
@@ -426,8 +425,8 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setIsMoodModalOpen(false)} className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-border text-cozy-text hover:bg-cozy-bg-alt transition-colors">Cancel</button>
-              <button onClick={handleMoodSubmit} className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-accent bg-cozy-accent text-white shadow-[0_4px_0_0_var(--cozy-accent-dark)] active:shadow-none active:translate-y-1 transition-all">Log Energy</button>
+              <button onClick={() => setIsMoodModalOpen(false)} className="flex-1 cozy-button-secondary py-3">Cancel</button>
+              <button onClick={handleMoodSubmit} className="flex-1 cozy-button py-3">Log Energy</button>
             </div>
           </div>
         </div>
@@ -443,12 +442,12 @@ export const DailyView: React.FC<DailyViewProps> = ({ data }) => {
             <textarea 
               value={gratitudeText} onChange={(e) => setGratitudeText(e.target.value)}
               placeholder="e.g., The coffee tasted especially good this morning, or my partner hugged me..."
-              className="w-full h-32 p-4 bg-cozy-bg border-2 border-cozy-border rounded-xl font-bold text-sm focus:border-cozy-gold outline-none transition-colors mb-6 resize-none"
+              className="cozy-input h-32 mb-6 resize-none"
             />
 
             <div className="flex gap-3">
-              <button onClick={() => setIsGratitudeModalOpen(false)} className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-border text-cozy-text hover:bg-cozy-bg-alt transition-colors">Cancel</button>
-              <button onClick={handleGratitudeSubmit} disabled={!gratitudeText.trim()} className="flex-1 py-3 rounded-xl font-bold border-2 border-cozy-gold bg-cozy-gold text-white shadow-[0_4px_0_0_rgba(251,191,36,0.5)] active:shadow-none active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Log Gratitude</button>
+              <button onClick={() => setIsGratitudeModalOpen(false)} className="flex-1 cozy-button-secondary py-3">Cancel</button>
+              <button onClick={handleGratitudeSubmit} disabled={!gratitudeText.trim()} className="flex-1 cozy-button py-3 !bg-cozy-gold !shadow-[0_4px_0_0_#dcb346] disabled:opacity-50 disabled:cursor-not-allowed">Log Gratitude</button>
             </div>
           </div>
         </div>

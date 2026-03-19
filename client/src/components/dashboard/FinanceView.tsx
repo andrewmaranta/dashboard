@@ -51,7 +51,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ data }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {financeCards.map((card, idx) => {
           return (
-            <div key={idx} className="bg-cozy-panel p-5 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-cozy-border shadow-[0_6px_0_0_var(--cozy-border)] flex flex-col group hover:-translate-y-1 transition-all">
+            <div key={idx} className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex flex-col group hover:-translate-y-1 transition-all">
               <div className="flex justify-between items-center mb-3 sm:mb-4">
                 <div className={`w-10 h-10 sm:w-12 h-12 rounded-xl sm:rounded-[1.1rem] ${card.bg} flex items-center justify-center border-2 border-transparent group-hover:scale-105 transition-all`}>
                   <span className="noto-emoji text-xl sm:text-2xl block leading-none">{card.icon}</span>
@@ -70,7 +70,7 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ data }) => {
       </div>
 
       {/* Progress Bars */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 bg-cozy-panel p-6 sm:p-12 rounded-[2rem] sm:rounded-[3.5rem] border-2 border-cozy-border shadow-[0_10px_0_0_var(--cozy-border)] sm:shadow-[0_15px_0_0_var(--cozy-border)] relative overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] relative overflow-hidden">
         
         {/* EF Progress */}
         <div className="space-y-4 sm:space-y-6 relative z-10">

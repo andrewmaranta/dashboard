@@ -124,7 +124,7 @@ export const ProtocolsView: React.FC = () => {
         </div>
         <button 
           onClick={() => setShowAdd(!showAdd)}
-          className="bg-cozy-bg-alt hover:bg-cozy-accent hover:text-white text-cozy-text-dim p-2 rounded-xl transition-all"
+          className="cozy-button-icon !bg-cozy-bg-alt hover:!bg-cozy-accent"
         >
           {showAdd ? <X size={20} /> : <Plus size={20} />}
         </button>
@@ -190,7 +190,7 @@ export const ProtocolsView: React.FC = () => {
             </select>
             <button 
               onClick={handleCreate}
-              className="flex-1 bg-cozy-accent text-white rounded-xl font-bold shadow-md hover:opacity-90 transition-all"
+              className="flex-1 cozy-button !py-2 !rounded-xl !shadow-sm"
             >
               Create Protocol
             </button>
@@ -238,8 +238,8 @@ export const ProtocolsView: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setEditingId(null)} className="px-4 py-2 text-xs font-bold text-cozy-text-dim">Cancel</button>
-                    <button onClick={() => handleUpdate(p.id)} className="px-4 py-2 bg-cozy-accent text-white rounded-xl text-xs font-bold">Save</button>
+                    <button onClick={() => setEditingId(null)} className="cozy-button-ghost !px-4 !py-2 !text-xs">Cancel</button>
+                    <button onClick={() => handleUpdate(p.id)} className="cozy-button !px-4 !py-2 !text-xs !shadow-sm">Save</button>
                   </div>
                 </div>
               ) : (
@@ -273,15 +273,15 @@ export const ProtocolsView: React.FC = () => {
                   <div className="flex items-center gap-3 w-full md:w-auto justify-end">
                     <button 
                       onClick={() => handleLog(p.id, true)}
-                      className="flex-1 md:flex-none py-3 px-6 bg-cozy-accent/10 text-cozy-accent hover:bg-cozy-accent hover:text-white border-2 border-cozy-accent/20 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                      className="flex-1 md:flex-none cozy-button-secondary !bg-cozy-accent/10 !text-cozy-accent hover:!bg-cozy-accent hover:!text-white !border-cozy-accent/20 px-6 py-3"
                     >
                       <Check size={18} strokeWidth={3} />
                       Log Action
                     </button>
                     
                     <div className="flex flex-col gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => startEditing(p)} className="text-cozy-text-dim hover:text-cozy-accent"><Settings2 size={16} /></button>
-                      <button onClick={() => handleArchive(p.id)} className="text-cozy-text-dim hover:text-red-500"><Trash2 size={16} /></button>
+                      <button onClick={() => startEditing(p)} className="cozy-button-icon !p-1.5"><Settings2 size={16} /></button>
+                      <button onClick={() => handleArchive(p.id)} className="cozy-button-icon !p-1.5 hover:!text-red-500 hover:!bg-red-500/10"><Trash2 size={16} /></button>
                     </div>
                   </div>
                 </div>

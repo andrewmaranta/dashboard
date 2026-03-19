@@ -4,6 +4,7 @@ import { Task, Belief, TaskTemplate } from '@/types';
 import { Trash2, Eraser, Settings2, Check, X, ShieldAlert, List, Plus, Minus, Repeat, Scroll, Bookmark, BookmarkPlus } from 'lucide-react';
 import { ProtocolsView } from './ProtocolsView';
 import { Toast, ToastType } from '../ui/Toast';
+import confetti from 'canvas-confetti';
 
 const M = (emoji: string) => `${emoji}\uFE0E`;
 
@@ -16,12 +17,12 @@ interface TasksViewProps {
 const ATTRIBUTES = ['PWR', 'DSC', 'VIT', 'KNW', 'WEL', 'SOC'];
 
 const ATTR_COLORS: Record<string, string> = {
-  PWR: 'bg-[#d68060]/10 text-[#d68060]', // Terracotta
-  DSC: 'bg-[#e9c46a]/15 text-[#c7a24b]', // Gold
-  VIT: 'bg-[#fb7185]/10 text-[#e11d48]', // Rose
-  KNW: 'bg-[#818cf8]/10 text-[#4f46e5]', // Indigo
-  WEL: 'bg-[#8da08e]/20 text-[#6e7f6f]', // Sage
-  SOC: 'bg-[#fbbf24]/10 text-[#b45309]', // Amber
+  PWR: 'bg-[var(--cozy-stat-power)]/10 text-[var(--cozy-stat-power)]',
+  DSC: 'bg-[var(--cozy-stat-discipline)]/15 text-[var(--cozy-stat-discipline)]',
+  VIT: 'bg-[var(--cozy-stat-vitality)]/10 text-[var(--cozy-stat-vitality)]',
+  KNW: 'bg-[var(--cozy-stat-knowledge)]/10 text-[var(--cozy-stat-knowledge)]',
+  WEL: 'bg-[var(--cozy-stat-wellness)]/20 text-[var(--cozy-stat-wellness)]',
+  SOC: 'bg-[var(--cozy-stat-social)]/10 text-[var(--cozy-stat-social)]',
 };
 
 export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
@@ -142,6 +143,18 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
       if (!sudsModalTask) return;
       try {
         await api.toggleTask(sudsModalTask.id, sudsBefore, sudsAfter);
+        
+        // Delight: Celebrate hard/epic quests with a subtle confetti burst
+        if (sudsModalTask.difficulty === 'epic' || sudsModalTask.difficulty === 'hard') {
+          confetti({
+            particleCount: sudsModalTask.difficulty === 'epic' ? 80 : 40,
+            spread: 60,
+            origin: { y: 0.9 },
+            colors: ['#8da08e', '#d68060', '#e9c46a'],
+            disableForReducedMotion: true
+          });
+        }
+        
         setSudsModalTask(null);
       } catch (e) { console.error(e); }
     };
@@ -245,25 +258,23 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
       
       {/* Sub-Nav Toggle */}
       <div className="flex justify-center">
-        <div className="bg-cozy-panel p-1.5 sm:p-2 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-cozy-border shadow-[0_6px_0_0_var(--cozy-border)] flex flex-wrap justify-center gap-1 sm:gap-2">
+        <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex flex-wrap justify-center gap-1 sm:gap-2">
           <button 
             onClick={() => setView('quests')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
-              view === 'quests' 
-                ? 'bg-cozy-accent text-white shadow-lg scale-105' 
-                : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
-            }`}
+            className={`
+              px-4 py-2 sm:px-6 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] text-xs sm:text-sm
+              ${view === 'quests' ? 'cozy-button !scale-105' : 'cozy-button-ghost'}
+            `}
           >
             <Scroll size={16} />
             Daily Quests
           </button>
           <button 
             onClick={() => setView('protocols')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
-              view === 'protocols' 
-                ? 'bg-cozy-gold text-white shadow-lg scale-105' 
-                : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
-            }`}
+            className={`
+              px-4 py-2 sm:px-6 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] text-xs sm:text-sm
+              ${view === 'protocols' ? 'cozy-button !bg-cozy-gold !shadow-[0_4px_0_0_#dcb346] !scale-105' : 'cozy-button-ghost'}
+            `}
           >
             <Repeat size={16} />
             If-Then Protocols
@@ -284,11 +295,12 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
             <div className="flex gap-2">
               <button 
                 onClick={() => setShowTemplates(!showTemplates)}
-                className={`flex items-center gap-2 px-4 py-2 bg-cozy-panel border-2 border-cozy-border rounded-xl text-xs font-bold transition-all shadow-sm active:shadow-none active:translate-y-1 ${
-                  showTemplates 
-                    ? 'border-cozy-accent text-cozy-accent' 
-                    : 'text-cozy-text-muted hover:border-cozy-accent hover:text-cozy-accent cursor-pointer'
-                }`}
+                className={`
+                  rounded-xl text-xs px-4 py-2
+                  ${showTemplates 
+                    ? 'cozy-button !bg-transparent !text-cozy-accent !border-cozy-accent !shadow-none' 
+                    : 'cozy-button-secondary !bg-cozy-panel !border-cozy-border hover:!border-cozy-accent/30'}
+                `}
               >
                 <Bookmark size={14} />
                 Templates
@@ -296,11 +308,12 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
               <button 
                 onClick={handleClearCompleted}
                 disabled={!hasCompleted}
-                className={`flex items-center gap-2 px-4 py-2 bg-cozy-panel border-2 border-cozy-border rounded-xl text-xs font-bold transition-all shadow-sm active:shadow-none active:translate-y-1 ${
-                  hasCompleted 
-                    ? 'text-cozy-text-muted hover:border-cozy-accent hover:text-cozy-accent cursor-pointer' 
-                    : 'opacity-50 cursor-not-allowed'
-                }`}
+                className={`
+                  rounded-xl text-xs px-4 py-2
+                  ${hasCompleted 
+                    ? 'cozy-button-secondary !bg-cozy-panel !border-cozy-border hover:!border-red-200 hover:!text-red-500' 
+                    : 'opacity-50 cursor-not-allowed cozy-button-ghost hover:!bg-transparent'}
+                `}
               >
                 <Eraser size={14} />
                 Clear
@@ -310,13 +323,17 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
 
           {/* Templates Panel */}
           {showTemplates && (
-            <div className="bg-cozy-panel p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-cozy-border shadow-[0_4px_0_0_var(--cozy-border)] animate-in slide-in-from-top-4 duration-300">
+            <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] animate-in slide-in-from-top-4 duration-300">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-cozy-text-dark uppercase tracking-widest">Saved Templates</h4>
                 <button onClick={() => setShowTemplates(false)} className="text-cozy-text-dim hover:text-cozy-accent"><X size={16} /></button>
               </div>
               {templates.length === 0 ? (
-                <p className="text-xs text-cozy-text-dim italic text-center py-4">No templates saved yet. Mark a quest as a template to see it here!</p>
+                <div className="flex flex-col items-center justify-center py-8 opacity-60">
+                  <span className="noto-emoji text-3xl mb-3 animate-float">{M('🗂')}</span>
+                  <p className="text-sm font-bold text-cozy-text-muted">No templates saved yet.</p>
+                  <p className="text-[10px] text-cozy-text-dim font-bold uppercase tracking-widest mt-1">Mark a quest as a template to use it here.</p>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {templates.map(tpl => (
@@ -334,7 +351,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                       </div>
                       <button 
                         onClick={(e) => handleDeleteTemplate(tpl.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-cozy-text-dim hover:text-red-500 transition-all"
+                        className="cozy-button-icon hover:!text-red-500 sm:opacity-0 group-hover:opacity-100"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -346,7 +363,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
           )}
 
           {/* Add Task Bar */}
-          <div className="bg-cozy-panel p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex flex-col gap-4">
+          <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex flex-col gap-4">
             <div className="flex flex-col md:flex-row gap-3 sm:gap-4 items-center">
               <div className="flex-1 w-full relative">
                  <span className="noto-emoji absolute left-4 top-1/2 -translate-y-1/2 text-cozy-text-dim text-lg sm:text-xl">{M('🔖')}</span>
@@ -355,7 +372,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                   value={newTaskText}
                   onChange={(e) => setNewTaskText(e.target.value)}
                   placeholder="Write a new quest..."
-                  className="w-full bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-border rounded-xl sm:rounded-2xl pl-11 sm:pl-12 pr-4 py-3 sm:py-4 text-sm sm:text-base text-cozy-text dark:text-white placeholder-cozy-text-dim focus:outline-none focus:border-cozy-accent transition-colors font-bold"
+                  className="cozy-input pl-11 sm:pl-12"
                   onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
                 />
               </div>
@@ -364,7 +381,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                 <select 
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
-                  className="flex-1 md:flex-none bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-base text-cozy-accent font-bold focus:outline-none focus:border-cozy-accent appearance-none text-center"
+                  className="cozy-input md:w-32 text-center !px-2"
                 >
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
@@ -374,14 +391,14 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                 <select 
                   value={selectedAttr}
                   onChange={(e) => setSelectedAttr(e.target.value)}
-                  className="flex-1 md:flex-none bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-border rounded-xl sm:rounded-2xl px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-base text-cozy-accent font-bold focus:outline-none focus:border-cozy-accent appearance-none text-center"
+                  className="cozy-input md:w-32 text-center !px-2"
                 >
                   {ATTRIBUTES.map(attr => <option key={attr} value={attr}>{attr}</option>)}
                 </select>
                 
                 <button 
                   onClick={handleAddTask}
-                  className="flex-1 md:flex-none bg-cozy-warm text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold shadow-[0_4px_0_0_var(--cozy-accent-dark)] hover:opacity-90 active:shadow-none active:translate-y-1 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 md:flex-none cozy-button px-6 sm:px-8 py-3 sm:py-4 !bg-[var(--cozy-warm)] !shadow-[0_4px_0_0_#d97746]"
                 >
                   <span className="noto-emoji text-lg sm:text-xl animate-wiggle">{M('⚔')}</span>
                   <span className="hidden sm:inline text-sm sm:text-base">Accept</span>
@@ -392,7 +409,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
             <div className="space-y-3">
               <button 
                 onClick={() => setShowOptions(!showOptions)}
-                className="text-xs font-bold text-cozy-text-dim hover:text-cozy-accent transition-colors flex items-center gap-2 w-full justify-center py-2"
+                className="cozy-button-ghost w-full py-2 text-xs"
               >
                 {showOptions ? <X size={14} /> : <Settings2 size={14} />}
                 {showOptions ? 'Collapse Options' : 'Add Beliefs & Ladders'}
@@ -479,19 +496,18 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                   {isEditing ? (
                     /* Edit Mode UI */
                     <div className="flex flex-col gap-4 w-full animate-pop">
-                      <input 
-                        type="text"
-                        value={editTaskText}
-                        onChange={(e) => setEditTaskText(e.target.value)}
-                        className="w-full bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-accent/30 rounded-xl px-4 py-2 text-base font-bold text-cozy-text dark:text-white focus:outline-none focus:border-cozy-accent"
-                        autoFocus
-                      />
-                      
+                                            <input 
+                                              type="text" 
+                                              value={editTaskText}
+                                              onChange={(e) => setEditTaskText(e.target.value)}
+                                              className="cozy-input !text-base"
+                                              autoFocus
+                                            />                      
                       {beliefs.length > 0 && (
                         <select
                           value={editBelief || ''}
                           onChange={(e) => setEditBelief(e.target.value ? parseInt(e.target.value) : null)}
-                          className="w-full bg-cozy-bg-alt/30 dark:bg-black/20 border-2 border-dashed border-cozy-border rounded-xl p-2 text-xs font-bold text-cozy-text dark:text-white focus:outline-none focus:border-cozy-accent"
+                          className="cozy-input !text-xs !py-2"
                         >
                           <option value="">-- No Linked Belief --</option>
                           {beliefs.map(b => (
@@ -518,7 +534,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                             value={editStepText}
                             onChange={(e) => setEditStepText(e.target.value)}
                             placeholder="Add step..."
-                            className="flex-1 bg-cozy-bg-alt/30 dark:bg-black/20 border-2 border-dashed border-cozy-border rounded-xl px-3 py-2 text-xs font-bold text-cozy-text dark:text-white focus:outline-none focus:border-cozy-accent"
+                            className="cozy-input !text-xs !py-2 flex-1"
                             onKeyDown={(e) => e.key === 'Enter' && handleAddEditStep()}
                           />
                           <div className="flex items-center gap-1 bg-cozy-bg-alt/30 dark:bg-black/20 border-2 border-dashed border-cozy-border rounded-xl px-2">
@@ -553,7 +569,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                         <div className="flex items-center gap-2 ml-auto">
                           <button 
                             onClick={() => handleDeleteTask(task.id)}
-                            className="p-2 text-cozy-text-dim hover:text-cozy-warm transition-all"
+                            className="cozy-button-icon hover:!text-red-500 hover:!bg-red-500/10"
                             title="Delete quest"
                           >
                             <Trash2 size={18} />
@@ -561,15 +577,15 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                           <div className="h-6 w-[2px] bg-cozy-border mx-1" />
                           <button 
                             onClick={cancelEditing}
-                            className="flex items-center gap-2 px-4 py-2 text-cozy-text-muted hover:text-cozy-text font-bold text-xs"
+                            className="flex items-center gap-2 cozy-button-ghost"
                           >
                             <X size={16} /> Cancel
                           </button>
                           <button 
                             onClick={handleUpdateTask}
-                            className="flex items-center gap-2 px-6 py-2 bg-cozy-accent text-white rounded-xl font-bold text-xs shadow-[0_4px_0_0_var(--cozy-accent-dark)] active:translate-y-1 active:shadow-none transition-all"
+                            className="flex items-center gap-2 cozy-button px-4 py-2"
                           >
-                            <Check size={16} /> Save Changes
+                            <Check size={16} /> Save
                           </button>
                         </div>
                       </div>
@@ -580,11 +596,14 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                       <div className="flex items-center gap-3 sm:gap-6 w-full">
                         <button 
                           onClick={() => handleToggleTask(task)} 
-                          className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center border-2 transition-all ${
-                            task.completed ? 'bg-cozy-accent border-cozy-accent text-white' : 'border-cozy-border text-transparent hover:border-cozy-accent'
+                          role="checkbox"
+                          aria-checked={!!task.completed}
+                          aria-label={`Toggle task: ${task.text}`}
+                          className={`flex-shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border-2 transition-all duration-200 active:scale-90 ${
+                            task.completed ? 'bg-cozy-accent border-cozy-accent text-white shadow-[0_0_12px_rgba(141,160,142,0.4)]' : 'border-cozy-border text-transparent hover:border-cozy-accent hover:bg-cozy-accent/5'
                           }`}
                         >
-                          <span className="noto-emoji text-xl sm:text-2xl">{task.completed ? M('✓') : ''}</span>
+                          <span className={`noto-emoji text-xl sm:text-2xl transition-transform duration-300 ${task.completed ? 'scale-100' : 'scale-0'}`}>{M('✓')}</span>
                         </button>
                         
                         <div className="flex flex-col min-w-0 flex-1">
@@ -612,11 +631,11 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 self-end sm:self-center">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 self-end sm:self-center">
                           {!task.completed && (
                             <button 
                               onClick={() => handleSaveAsTemplate(task)}
-                              className="sm:opacity-0 sm:group-hover:opacity-100 text-cozy-text-dim hover:text-cozy-gold transition-all p-2 rounded-xl hover:bg-cozy-gold/10"
+                              className="sm:opacity-0 sm:group-hover:opacity-100 cozy-button-icon hover:!text-cozy-gold hover:!bg-cozy-gold/10"
                               title="Save as Template"
                             >
                               <BookmarkPlus size={18} />
@@ -624,7 +643,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ data }) => {
                           )}
                           <button 
                             onClick={() => startEditing(task)}
-                            className="sm:opacity-0 sm:group-hover:opacity-100 text-cozy-text-dim hover:text-cozy-accent transition-all p-2 rounded-xl hover:bg-cozy-accent/10"
+                            className="sm:opacity-0 sm:group-hover:opacity-100 cozy-button-icon"
                             title="Edit Quest"
                           >
                             <Settings2 size={18} />

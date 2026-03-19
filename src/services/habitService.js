@@ -123,7 +123,10 @@ async function getHabitStreaks() {
         const normalized = habitMapping[r.habit];
         if (!normalized) return;
         if (!habitsByDate.has(normalized)) habitsByDate.set(normalized, []);
-        habitsByDate.get(normalized).push(r.date);
+        // Prevent duplicate dates for the same habit in streaks calculation
+        if (!habitsByDate.get(normalized).includes(r.date)) {
+            habitsByDate.get(normalized).push(r.date);
+        }
     });
     
     const localNow = new Date();
@@ -188,16 +191,31 @@ async function toggleHabit(habitName, requestedDate, note, io = null) {
     const targetHabit = reverseHabitMapping[habitName] || habitName;
     const database = await getDb();
 
-    const existing = await database.get('SELECT id, notes FROM habits_log WHERE date = ? AND habit = ?', [dateToToggle, targetHabit]);
+    // Find all potential aliases for this habit to prevent duplicates
+    const normalizedName = habitMapping[targetHabit] || habitName;
+    const aliases = Object.keys(habitMapping).filter(k => habitMapping[k] === normalizedName);
+    
+    // Check if any alias exists for this date
+    const placeholders = aliases.map(() => '?').join(',');
+    const existingEntries = await database.all(
+        `SELECT id, habit, notes FROM habits_log WHERE date = ? AND habit IN (${placeholders})`,
+        [dateToToggle, ...aliases]
+    );
 
     let xpResult = null;
-    if (existing) {
+    if (existingEntries.length > 0) {
+        // Use the first one found for update checks, but delete ALL if toggling off
+        const existing = existingEntries[0];
+        
         // If a new note is provided and it's different, update instead of toggle off
         if (note && existing.notes !== note) {
             await database.run('UPDATE habits_log SET notes = ? WHERE id = ?', [note, existing.id]);
             // No XP change for note update
         } else {
-            await database.run('DELETE FROM habits_log WHERE id = ?', [existing.id]);
+            // Delete all aliases found for this day
+            for (const entry of existingEntries) {
+                await database.run('DELETE FROM habits_log WHERE id = ?', [entry.id]);
+            }
             
             // Remove XP
             const normalized = habitMapping[targetHabit] || targetHabit;

@@ -247,7 +247,7 @@ async function getStreaks() {
     return { foodLogStreak, calorieStreak, proteinStreak };
 }
 
-async function updateDailyStats(stats) {
+async function updateDailyStats(stats, io = null) {
     const localNow = new Date();
     const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const database = await getDb();
@@ -259,12 +259,12 @@ async function updateDailyStats(stats) {
     );
     
     // Award 10 VIT XP for nutrition logging
-    await attributeService.addXP('VIT', 10);
+    await attributeService.addXP('VIT', 10, io);
     
     return true;
 }
 
-async function updateHealthStats(weight, bodyFat) {
+async function updateHealthStats(weight, bodyFat, io = null) {
     const localNow = new Date();
     const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const database = await getDb();
@@ -283,7 +283,7 @@ async function updateHealthStats(weight, bodyFat) {
             [today, weight, bodyFat]
         );
     }
-    await attributeService.addXP('VIT', 10);
+    await attributeService.addXP('VIT', 10, io);
     return true;
 }
 
@@ -292,7 +292,7 @@ async function getSleepHistory(limit = 30) {
     return await database.all('SELECT * FROM sleep_log ORDER BY date DESC LIMIT ?', [limit]);
 }
 
-async function updateSleep(hours, quality, notes = '') {
+async function updateSleep(hours, quality, notes = '', io = null) {
     const localNow = new Date();
     const today = new Date(localNow.getTime() - (localNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const database = await getDb();
@@ -309,7 +309,7 @@ async function updateSleep(hours, quality, notes = '') {
             [today, hours, quality, notes]
         );
     }
-    await attributeService.addXP('WEL', 10);
+    await attributeService.addXP('WEL', 10, io);
     return true;
 }
 

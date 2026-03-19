@@ -10,6 +10,9 @@ import {
   UserProfile
 } from '../types';
 
+let globalAudio: HTMLAudioElement | null = null;
+let lastTTSStartedAt = 0; // Tracks when ANY TTS started to prevent stutter
+
 export const useDashboardData = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -99,6 +102,34 @@ export const useDashboardData = () => {
       setFocusNotifications(prev => [...prev, { id: Math.random().toString(36).substr(2, 9), ...data }]);
     });
 
+    socket.on('ttsPlay', (data: { url: string, text?: string }) => {
+      console.log('TTS Broadcast Received:', data.text || 'Playing audio...');
+      
+      const isAutoDetected = data.text === 'Auto-detected new voice file' || !data.text;
+      const now = Date.now();
+      
+      // Prevent stuttering: 
+      // If we just started ANY TTS message within the last 15 seconds,
+      // ignore any auto-detected/textless broadcasts as they are likely duplicates.
+      const timeSinceLast = now - lastTTSStartedAt;
+      if (isAutoDetected && (timeSinceLast < 15000)) {
+        console.log(`[TTS] Ignoring redundant/auto audio to prevent stutter. Last TTS was ${timeSinceLast/1000}s ago.`);
+        return;
+      }
+      
+      // Always update timestamp to track any playback session
+      lastTTSStartedAt = now;
+
+      if (globalAudio) {
+        globalAudio.pause();
+        globalAudio.currentTime = 0;
+      }
+      globalAudio = new Audio(data.url);
+      globalAudio.play().catch(err => {
+        console.warn('Autoplay blocked or playback error:', err);
+      });
+    });
+
     return () => {
       socket.off('habitUpdated');
       socket.off('healthUpdated');
@@ -112,6 +143,7 @@ export const useDashboardData = () => {
       socket.off('xpGainedV2');
       socket.off('levelUp');
       socket.off('focusSessionComplete');
+      socket.off('ttsPlay');
     };
   }, []);
 
@@ -125,6 +157,21 @@ export const useDashboardData = () => {
 
   const removeFocusNotification = (id: string) => {
     setFocusNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const stopAudio = () => {
+    if (globalAudio) {
+      globalAudio.pause();
+      globalAudio.removeAttribute('src');
+      globalAudio.load();
+      globalAudio = null;
+    }
+    // As a fallback, stop any rogue audio elements on the page
+    document.querySelectorAll('audio').forEach(a => {
+      a.pause();
+      a.removeAttribute('src');
+      a.load();
+    });
   };
 
   return {
@@ -145,6 +192,7 @@ export const useDashboardData = () => {
     removeXpNotification,
     removeLevelUpNotification,
     removeFocusNotification,
+    stopAudio,
     refetch: fetchData
   };
 };

@@ -23,7 +23,7 @@ const NumberStepper = ({ value, onChange, step = 1, min = 0, max = 999, color = 
   };
 
   return (
-    <div className="flex items-center gap-2 bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-border rounded-xl sm:rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 w-full">
+    <div className="flex items-center gap-2 bg-cozy-bg-alt/50 border-2 border-transparent rounded-xl sm:rounded-2xl px-2 sm:px-3 py-1.5 sm:py-2 w-full focus-within:border-[var(--cozy-accent)] transition-colors">
       <button onClick={() => onChange(Math.max(min, Number((value - step).toFixed(1))))} className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-cozy-bg/50 transition-colors ${color}`}><Minus size={16} className="sm:w-5 sm:h-5" /></button>
       <div className="flex-1 flex items-center justify-center">
         <input 
@@ -140,7 +140,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
       
       {/* Top Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-8">
-        <div className="lg:col-span-2 bg-cozy-panel p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex justify-around items-center group hover:-translate-y-1 transition-transform">
+        <div className="lg:col-span-2 bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex justify-around items-center group hover:-translate-y-1 transition-transform">
           <div className="flex flex-col items-center">
             <span className="text-[8px] sm:text-[10px] text-cozy-text-dim uppercase tracking-widest font-bold mb-1 sm:mb-2">Weight</span>
             <div className="flex items-center gap-1 sm:gap-2">
@@ -158,7 +158,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
           </div>
         </div>
 
-        <div className="lg:col-span-3 bg-cozy-panel p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] flex justify-around items-center group hover:-translate-y-1 transition-transform">
+        <div className="lg:col-span-3 bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex justify-around items-center group hover:-translate-y-1 transition-transform">
           <div className="flex flex-col items-center">
             <span className="text-[8px] sm:text-[10px] text-cozy-text-dim uppercase tracking-widest font-bold mb-1 sm:mb-2">Calories</span>
             <div className="flex items-center gap-1 sm:gap-2">
@@ -192,18 +192,18 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-10">
         
         {/* Chart Section */}
-        <div className="lg:col-span-2 bg-cozy-panel p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[3rem] border-2 border-cozy-border shadow-[0_12px_0_0_var(--cozy-border)] relative overflow-hidden">
+        <div className="lg:col-span-2 bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] relative overflow-hidden">
           <div className="flex justify-between items-center mb-6 sm:mb-10 relative z-10">
             <h3 className="text-xl sm:text-2xl font-bold text-cozy-text-dark flex items-center gap-2 sm:gap-3">
               <span className="noto-emoji text-xl sm:text-2xl animate-float">{M('🧡')}</span>
               Weight Journey
-              <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-cozy-accent/10 text-cozy-accent border border-cozy-accent/20 uppercase tracking-widest ml-1 sm:ml-2">
+              <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--cozy-stat-vitality)]/10 text-[var(--cozy-stat-vitality)] border border-[var(--cozy-stat-vitality)]/20 uppercase tracking-widest ml-1 sm:ml-2">
                 +10 VIT
               </span>
             </h3>
             <button 
               onClick={() => setShowEditModal(true)}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-cozy-accent text-white font-bold rounded-xl sm:rounded-2xl border-2 border-cozy-accent-dark shadow-[0_4px_0_0_var(--cozy-accent-dark)] hover:shadow-[0_2px_0_0_var(--cozy-accent-dark)] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all text-xs sm:text-sm flex items-center gap-2"
+              className="cozy-button px-4 py-2 sm:px-6 sm:py-3 !bg-[var(--cozy-stat-vitality)] !shadow-[0_4px_0_0_#d97746] text-xs sm:text-sm"
             >
               Log
             </button>
@@ -213,8 +213,8 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
               <ComposedChart data={healthStats}>
                 <defs>
                   <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--cozy-accent)" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="var(--cozy-accent)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--cozy-stat-vitality)" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="var(--cozy-stat-vitality)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="var(--cozy-border)" />
@@ -238,7 +238,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
                   yAxisId="right"
                   orientation="right"
                   domain={['dataMin - 2', 'dataMax + 2']} 
-                  stroke="var(--cozy-warm)" 
+                  stroke="var(--cozy-stat-power)" 
                   fontSize={8} 
                   tickLine={false} 
                   axisLine={false} 
@@ -258,7 +258,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
                   type="monotone" 
                   dataKey="weight" 
                   name="weight"
-                  stroke="var(--cozy-accent)" 
+                  stroke="var(--cozy-stat-vitality)" 
                   strokeWidth={3}
                   fillOpacity={1} 
                   fill="url(#colorWeight)" 
@@ -269,9 +269,9 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
                   type="monotone"
                   dataKey="bodyFat"
                   name="bodyFat"
-                  stroke="var(--cozy-warm)"
+                  stroke="var(--cozy-stat-power)"
                   strokeWidth={2}
-                  dot={{ r: 3, fill: 'var(--cozy-warm)', strokeWidth: 1.5, stroke: 'var(--cozy-panel)' }}
+                  dot={{ r: 3, fill: 'var(--cozy-stat-power)', strokeWidth: 1.5, stroke: 'var(--cozy-panel)' }}
                   activeDot={{ r: 5, strokeWidth: 0 }}
                   animationDuration={2000}
                 />
@@ -281,15 +281,15 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
         </div>
 
         {/* Meals Section */}
-        <div className="bg-cozy-panel p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[3rem] border-2 border-cozy-border shadow-[0_12px_0_0_var(--cozy-border)] flex flex-col">
+        <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex flex-col">
           <div className="flex flex-col mb-6 sm:mb-8 gap-4">
             <h3 className="text-xl sm:text-2xl font-bold text-cozy-text-dark flex items-center gap-2 sm:gap-3">
               <span className="noto-emoji text-xl sm:text-2xl">{M('🥣')}</span>
               Nourishment
             </h3>
             
-            <div className="flex items-center bg-cozy-bg-alt rounded-xl sm:rounded-2xl p-1.5 border-2 border-cozy-border w-full justify-between">
-              <button onClick={() => changeDate(-1)} className="p-1 sm:p-1.5 hover:bg-cozy-panel rounded-xl transition-all"><ChevronLeft size={18} className="text-cozy-accent" /></button>
+            <div className="flex items-center bg-cozy-bg-alt rounded-xl sm:rounded-2xl p-1.5 border-2 border-cozy-border w-full justify-between hover:border-cozy-accent/50 transition-colors">
+              <button onClick={() => changeDate(-1)} className="cozy-button-icon !p-1 sm:!p-1.5 !rounded-xl !bg-transparent hover:!bg-cozy-panel"><ChevronLeft size={18} className="text-cozy-accent" /></button>
               
               <div className="relative flex-1 flex items-center justify-center">
                 <input 
@@ -303,7 +303,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
                 </span>
               </div>
               
-              <button onClick={() => changeDate(1)} className="p-1 sm:p-1.5 hover:bg-cozy-panel rounded-xl transition-all rotate-180"><ChevronLeft size={18} className="text-cozy-accent" /></button>
+              <button onClick={() => changeDate(1)} className="cozy-button-icon !p-1 sm:!p-1.5 !rounded-xl !bg-transparent hover:!bg-cozy-panel rotate-180"><ChevronLeft size={18} className="text-cozy-accent" /></button>
             </div>
           </div>
 
@@ -330,23 +330,23 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
       </div>
 
       {/* Sleep Graph Section */}
-      <div className="bg-cozy-panel p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[3rem] border-2 border-cozy-border shadow-[0_12px_0_0_var(--cozy-border)]">
+      <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem]">
         <div className="flex justify-between items-center mb-6 sm:mb-10">
           <div className="flex flex-col">
             <h3 className="text-xl sm:text-2xl font-bold text-cozy-text-dark flex items-center gap-2 sm:gap-3">
               <span className="noto-emoji text-xl sm:text-2xl animate-float">{M('🌙')}</span>
               Sleep & Dreams
-              <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-400/10 text-indigo-400 border border-indigo-400/20 uppercase tracking-widest ml-1 sm:ml-2">
+              <span className="text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-[var(--cozy-stat-knowledge)]/10 text-[var(--cozy-stat-knowledge)] border border-[var(--cozy-stat-knowledge)]/20 uppercase tracking-widest ml-1 sm:ml-2">
                 +10 WEL
               </span>
             </h3>
-            <span className="text-[10px] sm:text-sm font-bold text-indigo-400/80">
+            <span className="text-[10px] sm:text-sm font-bold text-[var(--cozy-stat-knowledge)]/80">
               Last night: {sleepHistory[0]?.hours || '-'} hrs
             </span>
           </div>
           <button 
             onClick={() => setShowSleepModal(true)}
-            className="px-4 sm:px-6 py-2 sm:py-3 bg-indigo-400 text-white font-bold rounded-xl sm:rounded-2xl border-2 border-indigo-500 shadow-[0_4px_0_0_#6366f1] hover:bg-indigo-500 hover:shadow-[0_2px_0_0_#6366f1] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all text-xs sm:text-sm flex items-center gap-2"
+            className="cozy-button px-4 py-2 sm:px-6 sm:py-3 !bg-[var(--cozy-stat-knowledge)] !shadow-[0_4px_0_0_#818cf8] text-xs sm:text-sm"
           >
             Log
           </button>
@@ -391,7 +391,7 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
 
       {/* Blood Pressure Section */}
       {bpData && bpData.history && (
-        <div className="bg-cozy-panel p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[3rem] border-2 border-cozy-border shadow-[0_12px_0_0_var(--cozy-border)]">
+        <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem]">
           <div className="flex justify-between items-center mb-6 sm:mb-10">
             <h3 className="text-xl sm:text-2xl font-bold text-cozy-text-dark flex items-center gap-2 sm:gap-3">
               <span className="noto-emoji text-xl sm:text-2xl">{M('🩸')}</span>
@@ -473,16 +473,16 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
             </div>
             <div className="flex gap-3 sm:gap-4 mt-8 sm:mt-12">
               <button 
-                onClick={handleUpdateStats}
-                className="flex-1 bg-cozy-accent text-white font-bold py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-[0_4px_0_0_var(--cozy-accent-dark)] sm:shadow-[0_6px_0_0_var(--cozy-accent-dark)] active:shadow-none active:translate-y-1 transition-all text-sm sm:text-base"
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 cozy-button-secondary py-3 sm:py-5"
               >
-                Save
+                Cancel
               </button>
               <button 
-                onClick={() => setShowEditModal(false)}
-                className="flex-1 bg-cozy-panel border-2 border-cozy-border text-cozy-text-dim font-bold py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-[0_4px_0_0_var(--cozy-border)] sm:shadow-[0_6px_0_0_var(--cozy-border)] active:shadow-none active:translate-y-1 transition-all text-sm sm:text-base"
+                onClick={handleUpdateStats}
+                className="flex-[2] cozy-button py-3 sm:py-5"
               >
-                Close
+                Save Stats
               </button>
             </div>
           </div>
@@ -516,16 +516,16 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
             </div>
             <div className="flex gap-3 sm:gap-4 mt-8 sm:mt-12">
               <button 
-                onClick={handleUpdateSleep}
-                className="flex-1 bg-indigo-400 text-white font-bold py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-[0_4px_0_0_#6366f1] sm:shadow-[0_6px_0_0_#6366f1] active:shadow-none active:translate-y-1 transition-all text-sm sm:text-base"
+                onClick={() => setShowSleepModal(false)}
+                className="flex-1 cozy-button-secondary py-3 sm:py-5"
               >
-                Save
+                Cancel
               </button>
               <button 
-                onClick={() => setShowSleepModal(false)}
-                className="flex-1 bg-cozy-panel border-2 border-cozy-border text-cozy-text-dim font-bold py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-[0_4px_0_0_var(--cozy-border)] sm:shadow-[0_6px_0_0_var(--cozy-border)] active:shadow-none active:translate-y-1 transition-all text-sm sm:text-base"
+                onClick={handleUpdateSleep}
+                className="flex-[2] cozy-button py-3 sm:py-5 !bg-[var(--cozy-stat-knowledge)] !shadow-[0_4px_0_0_#818cf8]"
               >
-                Close
+                Save Sleep
               </button>
             </div>
           </div>
@@ -561,22 +561,22 @@ export const HealthView: React.FC<HealthViewProps> = ({ data }) => {
                   type="text" value={bpNotes}
                   onChange={(e) => setBpNotes(e.target.value)}
                   placeholder="e.g. After coffee"
-                  className="w-full bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-border rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-cozy-text dark:text-white font-bold focus:outline-none focus:border-cozy-border transition-colors"
+                  className="cozy-input"
                 />
               </div>
             </div>
             <div className="flex gap-3 sm:gap-4 mt-8 sm:mt-12">
               <button 
-                onClick={handleUpdateBP}
-                className="flex-1 bg-cozy-warm text-white font-bold py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-[0_4px_0_0_#ef4444] sm:shadow-[0_6px_0_0_#ef4444] active:shadow-none active:translate-y-1 transition-all text-sm sm:text-base"
+                onClick={() => setShowBPModal(false)}
+                className="flex-1 cozy-button-secondary py-3 sm:py-5"
               >
-                Save
+                Cancel
               </button>
               <button 
-                onClick={() => setShowBPModal(false)}
-                className="flex-1 bg-cozy-panel border-2 border-cozy-border text-cozy-text-dim font-bold py-3 sm:py-5 rounded-xl sm:rounded-2xl shadow-[0_4px_0_0_var(--cozy-border)] sm:shadow-[0_6px_0_0_var(--cozy-border)] active:shadow-none active:translate-y-1 transition-all text-sm sm:text-base"
+                onClick={handleUpdateBP}
+                className="flex-[2] cozy-button py-3 sm:py-5 !bg-[var(--cozy-warm)] !shadow-[0_4px_0_0_#d97746]"
               >
-                Close
+                Save Stats
               </button>
             </div>
           </div>

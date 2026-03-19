@@ -1,0 +1,2 @@
+[dotenv@17.3.1] injecting env (2) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Life RPG Dashboard running on http://localhost:3000

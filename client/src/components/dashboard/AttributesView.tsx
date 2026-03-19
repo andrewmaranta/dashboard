@@ -116,32 +116,30 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
       
       {/* Sub-Nav Toggle */}
       <div className="flex justify-center">
-        <div className="bg-cozy-panel p-1.5 sm:p-2 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-cozy-border shadow-[0_6px_0_0_var(--cozy-border)] flex flex-wrap justify-center gap-1 sm:gap-2">
+        <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex flex-wrap justify-center gap-1 sm:gap-2">
           <button 
             onClick={() => setView('stats')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
-              view === 'stats' 
-                ? 'bg-cozy-accent text-white shadow-lg scale-105' 
-                : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
-            }`}
+            className={`
+              px-4 py-2 sm:px-6 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] text-xs sm:text-sm
+              ${view === 'stats' ? 'cozy-button !scale-105' : 'cozy-button-ghost'}
+            `}
           >
             <Activity size={16} />
             Stats
           </button>
           <button 
             onClick={() => setView('density')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
-              view === 'density' 
-                ? 'bg-cozy-gold text-white shadow-lg scale-105' 
-                : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
-            }`}
+            className={`
+              px-4 py-2 sm:px-6 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] text-xs sm:text-sm
+              ${view === 'density' ? 'cozy-button !bg-cozy-gold !shadow-[0_4px_0_0_#dcb346] !scale-105' : 'cozy-button-ghost'}
+            `}
           >
             <Database size={16} />
             Density
           </button>
           <button 
             onClick={() => setView('wealth')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all duration-200 active:scale-[0.98] active:translate-y-1 flex items-center gap-2 ${
               view === 'wealth' 
                 ? 'bg-emerald-500 text-white shadow-lg scale-105' 
                 : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
@@ -152,7 +150,7 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
           </button>
           <button 
             onClick={() => setView('savor')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all duration-200 active:scale-[0.98] active:translate-y-1 flex items-center gap-2 ${
               view === 'savor' 
                 ? 'bg-cozy-gold text-white shadow-lg scale-105' 
                 : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
@@ -163,7 +161,7 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
           </button>
           <button 
             onClick={() => setView('insights')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all duration-200 active:scale-[0.98] active:translate-y-1 flex items-center gap-2 ${
               view === 'insights' 
                 ? 'bg-cozy-accent text-white shadow-lg scale-105' 
                 : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
@@ -174,7 +172,7 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
           </button>
           <button 
             onClick={() => setView('vault')}
-            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-[1.2rem] sm:rounded-[1.5rem] font-bold text-xs sm:text-sm transition-all duration-200 active:scale-[0.98] active:translate-y-1 flex items-center gap-2 ${
               view === 'vault' 
                 ? 'bg-cozy-accent text-white shadow-lg scale-105' 
                 : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
@@ -189,7 +187,7 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
       {view === 'stats' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-16 items-center">
           {/* Radar Chart Section */}
-          <div className="bg-cozy-panel p-6 sm:p-12 rounded-[2rem] sm:rounded-[4rem] border-2 border-cozy-border shadow-[0_10px_0_0_var(--cozy-border)] sm:shadow-[0_20px_0_0_var(--cozy-border)] aspect-square flex items-center justify-center relative overflow-hidden group max-w-md mx-auto w-full">
+          <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] aspect-square flex items-center justify-center relative overflow-hidden group max-w-md mx-auto w-full">
             <div className="absolute inset-0 bg-cozy-bg-alt/20 transition-all group-hover:bg-cozy-bg-alt/40"></div>
             
             <div className="relative z-10 w-full h-full">
@@ -227,7 +225,7 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
                 <div 
                   key={key} 
                   onClick={() => setSelectedAttr(key)}
-                  className="bg-cozy-panel p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-cozy-border shadow-[0_6px_0_0_var(--cozy-border)] sm:shadow-[0_8px_0_0_var(--cozy-border)] flex items-center gap-4 sm:gap-6 group hover:-translate-y-1 transition-all hover:border-cozy-accent cursor-pointer active:scale-[0.98]"
+                  className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex items-center gap-4 sm:gap-6 group hover:-translate-y-1 transition-all hover:border-cozy-accent cursor-pointer active:scale-[0.98]"
                 >
                   <div className={`w-12 h-12 sm:w-16 sm:h-16 ${meta.bg} rounded-xl sm:rounded-[1.3rem] border-2 border-transparent flex items-center justify-center relative group-hover:scale-105 transition-all flex-shrink-0`}>
                      <span className="noto-emoji text-2xl sm:text-4xl block leading-none">{meta.icon}</span>
@@ -280,11 +278,10 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
                  <button
                    key={tf}
                    onClick={() => setTimeframe(tf)}
-                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                     timeframe === tf 
-                       ? 'bg-cozy-accent text-white shadow-md' 
-                       : 'text-cozy-text-muted hover:bg-cozy-bg-alt'
-                   }`}
+                   className={`
+                     px-3 py-1 rounded-lg text-xs
+                     ${timeframe === tf ? 'cozy-button !shadow-sm !py-1' : 'cozy-button-ghost !py-1'}
+                   `}
                  >
                    {tf}
                  </button>
@@ -307,7 +304,7 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
               const maxBucket = Math.max(...buckets, 1);
 
               return (
-                <div key={key} className="bg-cozy-panel p-6 rounded-[2rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] space-y-4">
+                <div key={key} className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="noto-emoji text-2xl">{meta.icon}</span>
@@ -362,7 +359,7 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             {insights.map((insight, idx) => (
-              <div key={idx} className={`bg-cozy-panel p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] sm:shadow-[0_10px_0_0_var(--cozy-border)] hover:border-cozy-accent transition-all group`}>
+              <div key={idx} className={`bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-sm hover:border-cozy-accent transition-all group`}>
                 <div className="flex items-start gap-4 sm:gap-6">
                    <div className={`w-12 h-12 sm:w-16 sm:h-16 ${insight.icon === '⏳' ? 'bg-cozy-warm/10 text-cozy-warm' : 'bg-cozy-accent/10 text-cozy-accent'} rounded-xl sm:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0`}>
                      <span className="noto-emoji text-2xl sm:text-3xl">{M(insight.icon)}</span>
@@ -416,7 +413,7 @@ export const AttributesView: React.FC<AttributesViewProps> = ({ data }) => {
 
               <button 
                 onClick={() => setSelectedAttr(null)}
-                className="w-full bg-cozy-accent text-white py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold shadow-[0_6px_0_0_var(--cozy-accent-dark)] hover:opacity-90 active:shadow-none active:translate-y-1 transition-all mt-4 text-sm sm:text-base"
+                className="w-full cozy-button py-4 sm:py-5 mt-4 text-sm sm:text-base"
               >
                 Got it
               </button>

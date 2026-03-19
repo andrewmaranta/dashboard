@@ -108,7 +108,7 @@ export const BeliefsView: React.FC = () => {
       </div>
 
       {/* Add New Belief */}
-      <div className="bg-cozy-panel p-6 rounded-[2rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] space-y-6">
+      <div className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] space-y-6">
         <div className="flex items-center gap-3 text-cozy-text-dim">
           <ShieldAlert size={20} />
           <h3 className="text-sm font-bold uppercase tracking-widest">Identify a Limiting Belief</h3>
@@ -120,7 +120,7 @@ export const BeliefsView: React.FC = () => {
             value={newBeliefText}
             onChange={(e) => setNewBeliefText(e.target.value)}
             placeholder='e.g., "I am not a disciplined person"'
-            className="w-full bg-cozy-bg-alt/50 dark:bg-black/20 border-2 border-cozy-border rounded-xl p-4 text-lg font-bold text-cozy-text dark:text-white placeholder-cozy-text-dim focus:outline-none focus:border-cozy-accent transition-colors"
+            className="cozy-input !text-lg !p-4"
           />
           
           <div className="space-y-2">
@@ -138,7 +138,7 @@ export const BeliefsView: React.FC = () => {
 
           <button 
             onClick={handleCreateBelief}
-            className="w-full bg-cozy-text-dark text-white py-4 rounded-xl font-bold shadow-[0_4px_0_0_rgba(0,0,0,0.2)] hover:opacity-90 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2"
+            className="w-full cozy-button py-4 !bg-cozy-text-dark !shadow-[0_4px_0_0_rgba(0,0,0,0.2)]"
           >
             <Plus size={18} />
             Map This Belief
@@ -154,7 +154,7 @@ export const BeliefsView: React.FC = () => {
           const shift = (belief.initial_confidence || belief.confidence) - belief.confidence;
 
           return (
-            <div key={belief.id} className="bg-cozy-panel p-6 rounded-[2rem] border-2 border-cozy-border shadow-[0_6px_0_0_var(--cozy-border)] space-y-6 group">
+            <div key={belief.id} className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] space-y-6 group">
               
               {/* Header / Edit Mode */}
               <div className="flex justify-between items-start gap-4">
@@ -164,7 +164,7 @@ export const BeliefsView: React.FC = () => {
                       type="text" 
                       value={editText}
                       onChange={(e) => setEditText(e.target.value)}
-                      className="w-full bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-accent rounded-xl p-3 font-bold text-cozy-text dark:text-white focus:outline-none"
+                      className="cozy-input !p-3"
                     />
                     <div className="space-y-2">
                       <div className="flex justify-between">
@@ -179,8 +179,8 @@ export const BeliefsView: React.FC = () => {
                       />
                     </div>
                     <div className="flex gap-2 justify-end">
-                      <button onClick={cancelEditing} className="px-4 py-2 text-xs font-bold text-cozy-text-dim hover:bg-cozy-bg-alt rounded-lg">Cancel</button>
-                      <button onClick={() => handleUpdate(belief.id)} className="px-4 py-2 text-xs font-bold bg-cozy-accent text-white rounded-lg shadow-sm hover:opacity-90">Save</button>
+                      <button onClick={cancelEditing} className="cozy-button-ghost !px-4 !py-2 !text-xs">Cancel</button>
+                      <button onClick={() => handleUpdate(belief.id)} className="cozy-button !px-4 !py-2 !text-xs !shadow-sm">Save</button>
                     </div>
                   </div>
                 ) : (
@@ -201,14 +201,14 @@ export const BeliefsView: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => startEditing(belief)} className="p-2 text-cozy-text-dim hover:text-cozy-accent hover:bg-cozy-bg-alt rounded-lg transition-colors" title="Edit">
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => startEditing(belief)} className="cozy-button-icon" title="Edit">
                         <Edit2 size={16} />
                       </button>
-                      <button onClick={() => handleArchive(belief.id)} className="p-2 text-cozy-text-dim hover:text-orange-500 hover:bg-orange-500/10 rounded-lg transition-colors" title="Archive">
+                      <button onClick={() => handleArchive(belief.id)} className="cozy-button-icon hover:!text-orange-500 hover:!bg-orange-500/10" title="Archive">
                         <Archive size={16} />
                       </button>
-                      <button onClick={() => handleDelete(belief.id)} className="p-2 text-cozy-text-dim hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors" title="Delete">
+                      <button onClick={() => handleDelete(belief.id)} className="cozy-button-icon hover:!text-red-500 hover:!bg-red-500/10" title="Delete">
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -243,7 +243,7 @@ export const BeliefsView: React.FC = () => {
               <div className="border-t-2 border-cozy-border pt-4">
                 <button 
                   onClick={() => toggleExpand(belief.id)}
-                  className="w-full flex items-center justify-between text-xs font-bold text-cozy-text-muted hover:text-cozy-text transition-colors"
+                  className="w-full cozy-button-ghost !justify-between !px-2 !py-1 !text-xs"
                 >
                   <span className="flex items-center gap-2">
                     <ShieldAlert size={14} />
@@ -263,17 +263,17 @@ export const BeliefsView: React.FC = () => {
                           value={evidenceText}
                           onChange={(e) => setEvidenceText(e.target.value)}
                           placeholder="What evidence counters this belief?"
-                          className="flex-1 bg-cozy-bg-alt dark:bg-black/20 border-2 border-cozy-border rounded-xl px-3 py-2 text-xs font-bold text-cozy-text dark:text-white focus:outline-none focus:border-cozy-accent"
+                          className="cozy-input !text-xs !px-3 !py-2 flex-1"
                           autoFocus
                           onKeyDown={(e) => e.key === 'Enter' && handleAddEvidence(belief.id)}
                         />
-                        <button onClick={() => handleAddEvidence(belief.id)} className="px-3 py-2 bg-cozy-accent text-white rounded-xl text-xs font-bold">Add</button>
-                        <button onClick={() => setAddingEvidenceId(null)} className="px-3 py-2 text-cozy-text-dim text-xs font-bold hover:bg-cozy-bg-alt rounded-xl"><X size={14} /></button>
+                        <button onClick={() => handleAddEvidence(belief.id)} className="cozy-button !px-3 !py-2 !text-xs !rounded-xl">Add</button>
+                        <button onClick={() => setAddingEvidenceId(null)} className="cozy-button-icon !rounded-xl"><X size={14} /></button>
                       </div>
                     ) : (
                       <button 
                         onClick={() => setAddingEvidenceId(belief.id)}
-                        className="w-full py-2 bg-cozy-bg-alt/50 border-2 border-dashed border-cozy-border rounded-xl text-xs font-bold text-cozy-text-dim hover:text-cozy-accent hover:border-cozy-accent transition-all flex items-center justify-center gap-2"
+                        className="cozy-button-secondary !border-dashed !border-cozy-border !bg-cozy-bg-alt/50 w-full !py-2 !text-xs !text-cozy-text-dim hover:!border-cozy-accent hover:!text-cozy-accent"
                       >
                         <Plus size={14} /> Add Manual Evidence
                       </button>
@@ -294,7 +294,7 @@ export const BeliefsView: React.FC = () => {
                           {ev.type !== 'task' && (
                             <button 
                               onClick={() => handleDeleteEvidence(ev.id)}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-cozy-text-dim hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 cozy-button-icon hover:!text-red-500 sm:opacity-0 group-hover:opacity-100"
                             >
                               <Trash2 size={12} />
                             </button>

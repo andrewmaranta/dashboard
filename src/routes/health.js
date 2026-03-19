@@ -83,7 +83,7 @@ router.get('/heatmap', async (req, res) => {
 router.post('/daily-stats', async (req, res) => {
     try {
         const stats = req.body;
-        await healthService.updateDailyStats(stats);
+        await healthService.updateDailyStats(stats, req.io);
         const updatedStats = await healthService.getDailyStats();
         const habits = await habitService.getTodayHabits();
         updatedStats.habits = habits;
@@ -99,7 +99,7 @@ router.post('/daily-stats', async (req, res) => {
 router.post('/health/stats', async (req, res) => {
     try {
         const { weight, bodyFat } = req.body;
-        await healthService.updateHealthStats(weight, bodyFat);
+        await healthService.updateHealthStats(weight, bodyFat, req.io);
         const updatedData = await healthService.getHealthData();
         req.io.emit('healthStatsUpdated', updatedData);
         res.json({ success: true, data: updatedData });
@@ -122,7 +122,7 @@ router.get('/sleep', async (req, res) => {
 router.post('/sleep', async (req, res) => {
     try {
         const { hours, quality, notes } = req.body;
-        await healthService.updateSleep(hours, quality, notes);
+        await healthService.updateSleep(hours, quality, notes, req.io);
         const history = await healthService.getSleepHistory();
         req.io.emit('sleepUpdated', history);
         res.json({ success: true, history });

@@ -117,6 +117,32 @@ async function logEntry(type, data) {
                 console.log(`🩺 Symptom logged: ${data.symptoms} (Severity: ${data.severity}/10)`);
                 break;
 
+            case 'task':
+                // data: { text, difficulty?, attribute? }
+                // difficulty: 'easy', 'medium', 'hard' (default: 'medium')
+                await db.run(
+                    `INSERT INTO tasks (text, completed, created_at, difficulty, archived, attribute) 
+                     VALUES (?, 0, ?, ?, 0, ?)`,
+                    [data.text, now, data.difficulty || 'medium', data.attribute || null]
+                );
+                console.log(`📝 Task added: ${data.text} (${data.difficulty || 'medium'})`);
+                break;
+
+            case 'state':
+                // data: { attribute, value, context?, location?, social? }
+                // attribute: e.g., 'WEL' (wellness), 'NRG' (energy), 'FCS' (focus)
+                // value: 1-10 scale
+                // context: optional note about the state
+                // location: where you are (default: 'Auto')
+                // social: social context like 'Alone', 'With friends', etc.
+                await db.run(
+                    `INSERT INTO attribute_state_logs (attribute_code, value, context, location, social_context, timestamp) 
+                     VALUES (?, ?, ?, ?, ?, ?)`,
+                    [data.attribute || 'WEL', data.value, data.context || '', data.location || 'Auto', data.social || 'Alone', now]
+                );
+                console.log(`📊 State logged: ${data.attribute || 'WEL'} = ${data.value}/10`);
+                break;
+
             default:
                 console.log(`Unknown type: ${type}`);
         }
@@ -154,6 +180,8 @@ async function main() {
         console.log('  node log.js focus \'{"duration":45,"type":"work"}\'');
         console.log('  node log.js finance \'{"emergencyFund":7000}\'');
         console.log('  node log.js bp \'{"systolic":120,"diastolic":80,"pulse":72}\'');
+        console.log('  node log.js task \'{"text":"Review course material","difficulty":"medium"}\'');
+        console.log('  node log.js state \'{"attribute":"WEL","value":4,"context":"low happiness"}\'');
         console.log('');
         console.log('Available templates: Good Protein Smoothie, Canned Sockeye Salmon, PC Free From Angus Beef Burger, etc.');
     }

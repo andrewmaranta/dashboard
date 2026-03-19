@@ -35,7 +35,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ data }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10 animate-pop">
       {campaigns.length > 0 ? campaigns.map((project, idx) => (
-        <div key={idx} className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] border-2 border-cozy-border shadow-[0_8px_0_0_var(--cozy-border)] sm:shadow-[0_12px_0_0_var(--cozy-border)] flex flex-col group hover:-translate-y-2 transition-all hover:border-cozy-accent">
+        <div key={idx} className="bg-cozy-panel p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] flex flex-col group hover:-translate-y-2 transition-all hover:border-cozy-accent">
           
           {/* Project Header */}
           <div className="flex justify-between items-start mb-4 sm:mb-6">
@@ -95,9 +95,10 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({ data }) => {
 
         </div>
       )) : (
-        <div className="col-span-full h-80 flex flex-col items-center justify-center opacity-30">
-          <span className="noto-emoji text-8xl mb-6">{M('⛰')}</span>
-          <span className="text-2xl italic font-bold text-cozy-text-muted">No active journeys found...</span>
+        <div className="col-span-full h-80 flex flex-col items-center justify-center text-cozy-text-muted opacity-50 hover:opacity-100 transition-opacity duration-500 cursor-default">
+          <span className="noto-emoji text-8xl mb-6 animate-float">{M('⛰')}</span>
+          <span className="text-2xl font-bold">The map is blank.</span>
+          <span className="text-sm font-bold text-cozy-text-dim mt-2 tracking-widest uppercase">Time to choose a destination.</span>
         </div>
       )}
     </div>

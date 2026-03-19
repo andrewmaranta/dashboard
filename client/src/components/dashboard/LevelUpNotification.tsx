@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import confetti from 'canvas-confetti';
 
 const M = (emoji: string) => `${emoji}\uFE0E`;
 
@@ -22,6 +23,14 @@ export const LevelUpNotification: React.FC<LevelUpNotificationProps> = ({ attrib
   const meta = ATTRIBUTE_METADATA[attribute] || { label: name, icon: M('✨'), color: 'text-cozy-accent', bg: 'bg-cozy-accent/10' };
   
   useEffect(() => {
+    // Fire confetti burst!
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.8 },
+      colors: ['#8da08e', '#d68060', '#e9c46a']
+    });
+
     const timer = setTimeout(onClose, 6000); // Level up lasts longer
     return () => clearTimeout(timer);
   }, [onClose]);
