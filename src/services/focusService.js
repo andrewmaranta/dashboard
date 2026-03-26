@@ -14,9 +14,12 @@ async function getDb() {
 }
 
 const notifyOpenClaw = (type) => {
-    const message = type === 'work' 
+    let message = type === 'work' 
         ? '🍅 Pomodoro complete! Time for a break ☕️'
         : '⏳ Break finished! Ready for another focus session?';
+    
+    // Prepend [webclient] to identify the source
+    message = `[webclient] ${message}`;
     
     // Using absolute path for better reliability
     const command = `/home/maranta/.npm-global/bin/openclaw message send --channel telegram --target 8132488660 --message "${message}"`;

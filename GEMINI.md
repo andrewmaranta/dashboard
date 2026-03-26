@@ -25,9 +25,11 @@ cd health_dashboard && nohup node server.js > output.log 2>&1 &
 ```
 
 **The Rule for FRONTEND changes:**
-After ANY client-side code changes in `health_dashboard/client/src/`, you MUST rebuild the production bundle and THEN restart both the static file server (port 5173) and the backend server (port 3000):
+⚠️ **SUPER ESSENTIAL:** You MUST follow these exact steps sequentially. DO NOT chain them all with `&&` or run the backend restart before `npm run build` completely finishes, otherwise the backend will crash looking for the missing `dist` folder.
+
+After ANY client-side code changes in `health_dashboard/client/src/`, rebuild the production bundle and THEN restart both the static file server (port 5173) and the backend server (port 3000):
 ```bash
-# 1. Clean and rebuild the React app
+# 1. Clean and rebuild the React app (WAIT FOR THIS TO FINISH COMPLETELY)
 cd health_dashboard/client
 rm -rf dist
 npm run build
@@ -37,7 +39,7 @@ kill -9 $(ss -tlnp | grep 5173 | grep -oP 'pid=\K\d+') || true
 sleep 1
 nohup npx http-server dist -p 5173 --host 0.0.0.0 > http-server.log 2>&1 &
 
-# 3. Restart the backend service (Port 3000)
+# 3. Restart the backend service (Port 3000) - ONLY after the dist folder exists
 sudo systemctl restart health-dashboard.service || (kill -9 $(ss -tlnp | grep 3000 | grep -oP 'pid=\K\d+') || true && cd .. && nohup node server.js > output.log 2>&1 &)
 ```
 

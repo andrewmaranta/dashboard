@@ -460,7 +460,7 @@ app.get('/api/tts/stream', async (req, res) => {
 });
 
 app.post('/api/openclaw/message', (req, res) => {
-    const { message, ttsEngine = 'openai', voiceId } = req.body;
+    let { message, ttsEngine = 'openai', voiceId } = req.body;
     
     // Mute the watcher briefly while we process this chat message
     lastAgentMessageTime = Date.now();
@@ -468,6 +468,9 @@ app.post('/api/openclaw/message', (req, res) => {
     if (!message || typeof message !== 'string') {
         return res.status(400).json({ error: 'Message text is required' });
     }
+
+    // Prepend [webclient] to messages coming from this endpoint
+    message = `[webclient] ${message}`;
 
     console.log(`[OpenClaw] Sending message: "${message}" (TTS Engine: ${ttsEngine}, Voice: ${voiceId || 'default'})`);
     
@@ -523,6 +526,7 @@ app.post('/api/openclaw/message', (req, res) => {
                 if (textParts.length > 0) {
                     agentText = textParts.join('\n\n');
                     console.log(`[OpenClaw] Agent replied with ${textParts.length} text parts.`);
+                    console.log(`[OpenClaw] RAW AGENT TEXT:`, agentText);
                 }
             } else if (responseData.payloads) {
                 // Handle direct payloads (non-result wrapped)
@@ -532,11 +536,14 @@ app.post('/api/openclaw/message', (req, res) => {
                 
                 if (textParts.length > 0) {
                     agentText = textParts.join('\n\n');
+                    console.log(`[OpenClaw] RAW AGENT TEXT:`, agentText);
                 }
             } else if (responseData.text) {
                 agentText = responseData.text; 
+                console.log(`[OpenClaw] RAW AGENT TEXT:`, agentText);
             } else if (typeof responseData === 'string') {
                 agentText = responseData;
+                console.log(`[OpenClaw] RAW AGENT TEXT:`, agentText);
             }
 
             if (!agentText) {
